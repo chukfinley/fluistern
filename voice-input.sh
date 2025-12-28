@@ -2,7 +2,14 @@
 # Voice Input - Toggle script
 # Call once to start recording, call again to stop and transcribe
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Resolve symlinks to find real script directory
+SCRIPT_PATH="${BASH_SOURCE[0]}"
+while [[ -L "$SCRIPT_PATH" ]]; do
+    SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_PATH")" && pwd)"
+    SCRIPT_PATH="$(readlink "$SCRIPT_PATH")"
+    [[ "$SCRIPT_PATH" != /* ]] && SCRIPT_PATH="$SCRIPT_DIR/$SCRIPT_PATH"
+done
+SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_PATH")" && pwd)"
 ENV_FILE="$SCRIPT_DIR/.env"
 STATE_FILE="/tmp/voice-input-state"
 AUDIO_FILE="/tmp/voice-input-recording.wav"
@@ -12,6 +19,9 @@ PIPE_FILE="/tmp/voice-input-pipe"
 # Load config
 source "$ENV_FILE"
 
+# Defaults
+NOTIFICATIONS="${NOTIFICATIONS:-true}"
+
 # Function to update tray state
 update_tray() {
     if [[ -p "$PIPE_FILE" ]]; then
@@ -19,9 +29,11 @@ update_tray() {
     fi
 }
 
-# Function to show notification
+# Function to show notification (respects NOTIFICATIONS setting)
 notify() {
-    notify-send "Voice Input" "$1" -i "$SCRIPT_DIR/icons/$2.svg" -t 2000
+    if [[ "$NOTIFICATIONS" == "true" ]]; then
+        notify-send "Flüstern" "$1" -i "$SCRIPT_DIR/icons/$2.svg" -t 2000
+    fi
 }
 
 # Function to compress audio to opus/ogg (small but good quality)
@@ -43,10 +55,19 @@ transcribe() {
         -H "Authorization: Bearer $GROQ_API_KEY" \
         -F "file=@$AUDIO_COMPRESSED" \
         -F "model=whisper-large-v3-turbo" \
-        -F "response_format=text" \
+        -F "response_format=json" \
         $lang_param)
 
-    echo "$response"
+    # Check for API errors
+    if echo "$response" | jq -e '.error' >/dev/null 2>&1; then
+        local error_msg=$(echo "$response" | jq -r '.error.message // "API Error"')
+        notify "Error: $error_msg" "idle"
+        echo ""
+        return 1
+    fi
+
+    # Extract text from JSON response
+    echo "$response" | jq -r '.text // empty'
 }
 
 # Function to format text using Groq (openai/gpt-oss-20b)
@@ -77,6 +98,12 @@ format_text() {
         -H "Authorization: Bearer $GROQ_API_KEY" \
         -H "Content-Type: application/json" \
         -d "$json_payload")
+
+    # Check for API errors
+    if echo "$response" | jq -e '.error' >/dev/null 2>&1; then
+        echo ""
+        return 1
+    fi
 
     # Extract the content from the response
     echo "$response" | jq -r '.choices[0].message.content // empty'

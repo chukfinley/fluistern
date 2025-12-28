@@ -2,7 +2,14 @@
 # Voice Input Daemon - Manages tray icon
 # Run this at startup (e.g., in .xinitrc or as systemd user service)
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Resolve symlinks to find real script directory
+SCRIPT_PATH="${BASH_SOURCE[0]}"
+while [[ -L "$SCRIPT_PATH" ]]; do
+    SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_PATH")" && pwd)"
+    SCRIPT_PATH="$(readlink "$SCRIPT_PATH")"
+    [[ "$SCRIPT_PATH" != /* ]] && SCRIPT_PATH="$SCRIPT_DIR/$SCRIPT_PATH"
+done
+SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_PATH")" && pwd)"
 ICON_DIR="$SCRIPT_DIR/icons"
 PIPE_FILE="/tmp/voice-input-pipe"
 STATE_FILE="/tmp/voice-input-state"

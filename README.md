@@ -33,7 +33,7 @@ A lightweight voice-to-text tool that uses Groq's Whisper API for transcription 
 
 ```bash
 # Clone the repo
-git clone https://github.com/YOUR_USERNAME/fluistern.git
+git clone https://github.com/chukfinley/fluistern.git
 cd fluistern
 
 # Copy and configure .env

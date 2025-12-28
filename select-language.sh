@@ -7,13 +7,14 @@ ICON_DIR="$SCRIPT_DIR/icons"
 
 source "$ENV_FILE" 2>/dev/null
 
-# Common languages for Whisper
+# All Whisper-supported languages (Groq API)
 LANGUAGES=(
     "auto|Auto-detect"
     "en|English"
     "de|German (Deutsch)"
     "es|Spanish (Español)"
     "fr|French (Français)"
+    "hi|Hindi (हिन्दी)"
     "it|Italian (Italiano)"
     "pt|Portuguese (Português)"
     "nl|Dutch (Nederlands)"
@@ -22,6 +23,44 @@ LANGUAGES=(
     "zh|Chinese (中文)"
     "ja|Japanese (日本語)"
     "ko|Korean (한국어)"
+    "ar|Arabic (العربية)"
+    "tr|Turkish (Türkçe)"
+    "vi|Vietnamese (Tiếng Việt)"
+    "th|Thai (ไทย)"
+    "id|Indonesian"
+    "ms|Malay"
+    "tl|Tagalog"
+    "uk|Ukrainian (Українська)"
+    "cs|Czech (Čeština)"
+    "el|Greek (Ελληνικά)"
+    "he|Hebrew (עברית)"
+    "hu|Hungarian (Magyar)"
+    "sv|Swedish (Svenska)"
+    "da|Danish (Dansk)"
+    "fi|Finnish (Suomi)"
+    "no|Norwegian (Norsk)"
+    "ro|Romanian (Română)"
+    "sk|Slovak (Slovenčina)"
+    "bg|Bulgarian (Български)"
+    "hr|Croatian (Hrvatski)"
+    "sr|Serbian (Српски)"
+    "sl|Slovenian (Slovenščina)"
+    "et|Estonian (Eesti)"
+    "lv|Latvian (Latviešu)"
+    "lt|Lithuanian (Lietuvių)"
+    "bn|Bengali (বাংলা)"
+    "ta|Tamil (தமிழ்)"
+    "te|Telugu (తెలుగు)"
+    "mr|Marathi (मराठी)"
+    "ur|Urdu (اردو)"
+    "fa|Persian (فارسی)"
+    "sw|Swahili"
+    "af|Afrikaans"
+    "ca|Catalan"
+    "gl|Galician"
+    "eu|Basque"
+    "cy|Welsh"
+    "is|Icelandic"
 )
 
 # Build menu items
@@ -47,7 +86,7 @@ selected=$(echo -e "$menu_items" | yad --list \
     --column="Code":HD \
     --radiolist \
     --width=350 \
-    --height=400 \
+    --height=500 \
     --print-column=3 \
     --separator="" \
     --center \

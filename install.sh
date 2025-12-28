@@ -5,6 +5,8 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+INSTALL_DIR="$HOME/.local/share/fluistern"
+BIN_DIR="$HOME/.local/bin"
 
 echo "=== Flüstern Installer ==="
 echo "Voice dictation for Linux"
@@ -52,28 +54,45 @@ fi
 echo "All dependencies installed!"
 echo
 
+# Install files to ~/.local/share/fluistern
+echo "Installing to $INSTALL_DIR..."
+mkdir -p "$INSTALL_DIR"
+mkdir -p "$BIN_DIR"
+
+# Copy all files
+cp -r "$SCRIPT_DIR/icons" "$INSTALL_DIR/"
+cp "$SCRIPT_DIR/voice-input.sh" "$INSTALL_DIR/"
+cp "$SCRIPT_DIR/voice-input-daemon.sh" "$INSTALL_DIR/"
+cp "$SCRIPT_DIR/select-mic.sh" "$INSTALL_DIR/"
+cp "$SCRIPT_DIR/select-language.sh" "$INSTALL_DIR/"
+chmod +x "$INSTALL_DIR"/*.sh
+
 # Create .env from example if it doesn't exist
-if [[ ! -f "$SCRIPT_DIR/.env" ]]; then
+if [[ ! -f "$INSTALL_DIR/.env" ]]; then
     if [[ -f "$SCRIPT_DIR/.env.example" ]]; then
-        cp "$SCRIPT_DIR/.env.example" "$SCRIPT_DIR/.env"
-        echo "Created .env from .env.example"
+        cp "$SCRIPT_DIR/.env.example" "$INSTALL_DIR/.env"
+    elif [[ -f "$SCRIPT_DIR/.env" ]]; then
+        cp "$SCRIPT_DIR/.env" "$INSTALL_DIR/.env"
     fi
 fi
 
+# Create symlink in ~/.local/bin
+ln -sf "$INSTALL_DIR/voice-input.sh" "$BIN_DIR/fluistern"
+echo "Created symlink: $BIN_DIR/fluistern"
+
 # Check .env configuration
-source "$SCRIPT_DIR/.env" 2>/dev/null || true
+source "$INSTALL_DIR/.env" 2>/dev/null || true
 if [[ -z "$GROQ_API_KEY" ]]; then
     echo ""
-    echo "WARNING: You need to configure your Groq API key!"
+    echo "Configure your Groq API key:"
     echo ""
-    echo "  1. Get a free API key from: https://console.groq.com/keys"
-    echo "  2. Edit: $SCRIPT_DIR/.env"
-    echo "  3. Set GROQ_API_KEY=\"your-key-here\""
+    echo "  1. Get a free key from: https://console.groq.com/keys"
+    echo "  2. Edit: $INSTALL_DIR/.env"
     echo ""
     read -p "Open .env in editor now? [Y/n] " -n 1 -r
     echo
     if [[ ! $REPLY =~ ^[Nn]$ ]]; then
-        ${EDITOR:-nano} "$SCRIPT_DIR/.env"
+        ${EDITOR:-nano} "$INSTALL_DIR/.env"
     fi
 fi
 
@@ -88,7 +107,7 @@ After=graphical-session.target
 
 [Service]
 Type=simple
-ExecStart=$SCRIPT_DIR/voice-input-daemon.sh
+ExecStart=$INSTALL_DIR/voice-input-daemon.sh
 Restart=on-failure
 RestartSec=3
 Environment=DISPLAY=:0
@@ -113,24 +132,25 @@ fi
 echo
 echo "=== Installation Complete ==="
 echo
+echo "Installed to: $INSTALL_DIR"
+echo "Command: fluistern (or $BIN_DIR/fluistern)"
+echo
+echo "You can now delete the git clone folder if you want."
+echo
 echo "Next steps:"
 echo
 echo "  1. Right-click the tray icon to configure mic/language"
 echo
-echo "  2. Add a keybinding to your WM:"
+echo "  2. Add a keybinding in your WM/DE config to run: fluistern"
 echo
-echo "     dwm config.h:"
-echo "       { MODKEY, XK_r, spawn, SHCMD(\"$SCRIPT_DIR/voice-input.sh\") },"
-echo
-echo "     i3 config:"
-echo "       bindsym \$mod+r exec $SCRIPT_DIR/voice-input.sh"
-echo
-echo "     sxhkd:"
-echo "       super + r"
-echo "           $SCRIPT_DIR/voice-input.sh"
+echo "     Examples:"
+echo "       sxhkd:     super + r -> fluistern"
+echo "       Hyprland:  bind = SUPER, R, exec, fluistern"
+echo "       i3/sway:   bindsym \$mod+r exec fluistern"
+echo "       dwm:       { MODKEY, XK_r, spawn, SHCMD(\"fluistern\") }"
 echo
 echo "Commands:"
 echo "  Start daemon:  systemctl --user start fluistern"
 echo "  Stop daemon:   systemctl --user stop fluistern"
-echo "  View logs:     journalctl --user -u fluistern -f"
+echo "  Uninstall:     rm -rf $INSTALL_DIR $BIN_DIR/fluistern"
 echo

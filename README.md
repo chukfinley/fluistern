@@ -66,6 +66,18 @@ The installer will check for these:
 3. Generate an API key
 4. The installer will prompt you, or edit `~/.local/share/fluistern/.env`
 
+### Config Options
+
+Edit `~/.local/share/fluistern/.env`:
+
+```bash
+GROQ_API_KEY="your-key"      # Required
+LANGUAGE="de"                 # Optional: en, de, es, fr, hi, etc.
+MIC_SOURCE=""                 # Optional: specific mic (use tray menu to select)
+NOTIFICATIONS="true"          # Show notifications (true/false)
+TRAY_ICON="true"              # Show tray icon (true/false)
+```
+
 ### Add Keybinding
 
 Add a keybinding in your WM config to run `fluistern`:

@@ -89,10 +89,14 @@ if [[ -z "$GROQ_API_KEY" ]]; then
     echo "  1. Get a free key from: https://console.groq.com/keys"
     echo "  2. Edit: $INSTALL_DIR/.env"
     echo ""
-    read -p "Open .env in editor now? [Y/n] " -n 1 -r
+    read -p "Open .env in nano now? [Y/n] " -n 1 -r
     echo
     if [[ ! $REPLY =~ ^[Nn]$ ]]; then
-        ${EDITOR:-nano} "$INSTALL_DIR/.env"
+        if command -v nano >/dev/null 2>&1; then
+            nano "$INSTALL_DIR/.env"
+        else
+            ${EDITOR:-vi} "$INSTALL_DIR/.env"
+        fi
     fi
 fi
 

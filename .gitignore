@@ -1,0 +1,13 @@
+# Environment with secrets
+.env
+
+# Temporary files
+*.wav
+*.ogg
+*.mp3
+
+# Editor files
+*.swp
+*~
+.vscode/
+.idea/

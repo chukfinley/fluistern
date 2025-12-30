@@ -118,6 +118,9 @@ compress_audio() {
     ffmpeg -y -i "$AUDIO_FILE" -ar 16000 -ac 1 -c:a libopus -b:a 48k "$AUDIO_COMPRESSED" 2>/dev/null
 }
 
+# Temp files for timing (subshell workaround)
+TIMING_FILE="/tmp/voice-input-timing"
+
 # Function to transcribe audio using Groq
 transcribe() {
     local response
@@ -140,14 +143,15 @@ transcribe() {
         $lang_param)
 
     local end_time=$(date +%s%3N)
-    WHISPER_DURATION_MS=$((end_time - start_time))
-    debug_log "Whisper completed in ${WHISPER_DURATION_MS}ms"
+    local duration=$((end_time - start_time))
+    echo "$duration" > "${TIMING_FILE}-whisper"
+    debug_log "Whisper completed in ${duration}ms"
 
     # Check for API errors
     if echo "$response" | jq -e '.error' >/dev/null 2>&1; then
         local error_msg=$(echo "$response" | jq -r '.error.message // "API Error"')
         debug_log "Whisper ERROR: $error_msg"
-        WHISPER_ERROR="$error_msg"
+        echo "$error_msg" > "${TIMING_FILE}-whisper-error"
         notify "Error: $error_msg" "idle"
         echo ""
         return 1
@@ -201,14 +205,15 @@ format_text() {
         -d "$json_payload")
 
     local end_time=$(date +%s%3N)
-    LLM_DURATION_MS=$((end_time - start_time))
-    debug_log "LLM completed in ${LLM_DURATION_MS}ms"
+    local duration=$((end_time - start_time))
+    echo "$duration" > "${TIMING_FILE}-llm"
+    debug_log "LLM completed in ${duration}ms"
 
     # Check for API errors
     if echo "$response" | jq -e '.error' >/dev/null 2>&1; then
         local error_msg=$(echo "$response" | jq -r '.error.message // "API Error"')
         debug_log "LLM ERROR: $error_msg"
-        LLM_ERROR="$error_msg"
+        echo "$error_msg" > "${TIMING_FILE}-llm-error"
         echo ""
         return 1
     fi
@@ -285,7 +290,10 @@ if [[ -f "$STATE_FILE" ]]; then
         rm -f "$AUDIO_FILE" "$AUDIO_COMPRESSED"
         TOTAL_END=$(date +%s%3N)
         TOTAL_MS=$((TOTAL_END - TOTAL_START))
-        save_to_db "" "" "$WHISPER_DURATION_MS" 0 "$TOTAL_MS" 0 "${WHISPER_ERROR:-Transcription returned empty}"
+        WHISPER_DURATION_MS=$(cat "${TIMING_FILE}-whisper" 2>/dev/null || echo "0")
+        WHISPER_ERROR=$(cat "${TIMING_FILE}-whisper-error" 2>/dev/null || echo "Transcription returned empty")
+        save_to_db "" "" "$WHISPER_DURATION_MS" 0 "$TOTAL_MS" 0 "$WHISPER_ERROR"
+        rm -f "${TIMING_FILE}-whisper" "${TIMING_FILE}-whisper-error"
         exit 1
     fi
 
@@ -302,6 +310,10 @@ if [[ -f "$STATE_FILE" ]]; then
     debug_log "Pasting text to focused window"
     type_text "$formatted"
 
+    # Read timing from temp files (subshell workaround)
+    WHISPER_DURATION_MS=$(cat "${TIMING_FILE}-whisper" 2>/dev/null || echo "0")
+    LLM_DURATION_MS=$(cat "${TIMING_FILE}-llm" 2>/dev/null || echo "0")
+
     # Calculate total time
     TOTAL_END=$(date +%s%3N)
     TOTAL_MS=$((TOTAL_END - TOTAL_START))
@@ -313,7 +325,7 @@ if [[ -f "$STATE_FILE" ]]; then
     save_to_db "$transcript" "$formatted" "$WHISPER_DURATION_MS" "$LLM_DURATION_MS" "$TOTAL_MS" 1 ""
 
     # Cleanup
-    rm -f "$AUDIO_FILE" "$AUDIO_COMPRESSED"
+    rm -f "$AUDIO_FILE" "$AUDIO_COMPRESSED" "${TIMING_FILE}-whisper" "${TIMING_FILE}-llm" "${TIMING_FILE}-whisper-error" "${TIMING_FILE}-llm-error"
 
     update_tray "idle"
     notify "Done!" "idle"

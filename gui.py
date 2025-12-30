@@ -109,6 +109,11 @@ class Database:
         ''', (limit,))
         return cursor.fetchall()
 
+    def delete_recording(self, recording_id):
+        cursor = self.conn.cursor()
+        cursor.execute('DELETE FROM recordings WHERE id = ?', (recording_id,))
+        self.conn.commit()
+
     def get_corrections(self):
         cursor = self.conn.cursor()
         cursor.execute('SELECT * FROM corrections ORDER BY created_at DESC')
@@ -356,11 +361,22 @@ class RecordingRow(Gtk.Box):
         corr_frame.set_child(corr_scroll)
         corr_group.append(corr_frame)
 
+        # Button row
+        btn_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+
         # Save button
         save_btn = Gtk.Button(label="Korrektur speichern")
         save_btn.add_css_class("suggested-action")
         save_btn.connect("clicked", self._on_save)
-        corr_group.append(save_btn)
+        btn_row.append(save_btn)
+
+        # Delete button
+        delete_btn = Gtk.Button(label="Löschen")
+        delete_btn.add_css_class("destructive-action")
+        delete_btn.connect("clicked", self._on_delete)
+        btn_row.append(delete_btn)
+
+        corr_group.append(btn_row)
 
         self.detail_box.append(corr_group)
 
@@ -392,6 +408,11 @@ class RecordingRow(Gtk.Box):
             recording_id = self.recording.get('id')
             self.db.update_correction(recording_id, correction)
             self.on_save_callback()
+
+    def _on_delete(self, button):
+        recording_id = self.recording.get('id')
+        self.db.delete_recording(recording_id)
+        self.on_save_callback()  # Refresh the list
 
 
 class FluesternGUI(Adw.Application):
@@ -556,7 +577,8 @@ class FluesternGUI(Adw.Application):
                 self.history_box.append(row)
 
     def _on_correction_saved(self):
-        """Called when a correction is saved - refresh the corrections tab"""
+        """Called when a correction is saved or recording deleted - refresh"""
+        self.refresh_history()
         self.refresh_corrections()
 
     def create_logs_page(self):

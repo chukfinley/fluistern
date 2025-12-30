@@ -65,7 +65,7 @@ while kill -0 $YAD_PID 2>/dev/null; do
     if [[ -f "$STATE_FILE" ]]; then
         if [[ "$(cat "$ICON_STATE_FILE" 2>/dev/null)" != "recording" ]]; then
             echo "recording" > "$ICON_STATE_FILE"
-            [[ "$NOTIFICATIONS" == "true" ]] && notify-send "Flüstern" "Recording..." -i "$ICON_DIR/recording.svg" -t 1500
+            # Notification is sent by voice-input.sh, not here (avoid duplicates)
         fi
     else
         if [[ "$(cat "$ICON_STATE_FILE" 2>/dev/null)" != "idle" ]]; then

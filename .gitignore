@@ -6,6 +6,13 @@
 *.ogg
 *.mp3
 
+# Database (contains personal voice history)
+history.db
+
+# Python cache
+__pycache__/
+*.pyc
+
 # Editor files
 *.swp
 *~

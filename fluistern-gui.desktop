@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Flüstern GUI
+Comment=Recording History, Debug Logs & Settings for Voice Input
+Exec=python3 /home/user/git/voice-input/gui.py
+Icon=/home/user/git/voice-input/icons/idle.svg
+Terminal=false
+Type=Application
+Categories=AudioVideo;Audio;Utility;
+Keywords=voice;input;dictation;whisper;transcription;

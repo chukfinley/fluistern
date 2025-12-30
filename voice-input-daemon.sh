@@ -50,6 +50,7 @@ yad --notification \
     --image="$ICON_DIR/idle.svg" \
     --text="Flüstern - Ready" \
     --menu="Toggle Recording!$SCRIPT_DIR/voice-input.sh|\
+Einstellungen & Historie!python3 $SCRIPT_DIR/gui.py|\
 Select Microphone!$SCRIPT_DIR/select-mic.sh|\
 Select Language!$SCRIPT_DIR/select-language.sh|\
 Quit!quit" \

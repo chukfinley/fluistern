@@ -109,13 +109,17 @@ format_text() {
     echo "$response" | jq -r '.choices[0].message.content // empty'
 }
 
-# Function to type text into focused window
+# Function to paste text into focused window
 type_text() {
     local text="$1"
     # Small delay to ensure focus returns to original window
     sleep 0.1
-    # Use xdotool to type the text
-    xdotool type --clearmodifiers --delay 5 -- "$text"
+    # Copy to both clipboard and primary selection
+    printf '%s' "$text" | xclip -selection clipboard -i
+    printf '%s' "$text" | xclip -selection primary -i
+    sleep 0.1
+    # Shift+Insert works in terminals (uses primary selection)
+    xdotool key --delay 50 shift+Insert
 }
 
 # Main toggle logic

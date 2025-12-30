@@ -12,7 +12,7 @@ A lightweight voice-to-text tool that uses Groq's Whisper API for transcription 
 - **50+ languages** including Hindi, Arabic, Chinese, and more
 - **Microphone selection** via tray menu
 - **Keyboard shortcut** toggle (start/stop recording)
-- **Types directly** into any focused text field
+- **Pastes directly** into any focused text field
 
 ## Demo
 
@@ -51,7 +51,8 @@ After install, you can delete the cloned folder.
 The installer will check for these:
 
 - `yad` - tray icon
-- `xdotool` - typing into windows
+- `xdotool` - simulating paste
+- `xclip` - clipboard access
 - `ffmpeg` - audio compression
 - `jq` - JSON parsing
 - `curl` - API calls
@@ -115,7 +116,7 @@ Keybind → Start recording (16kHz mono WAV)
 Keybind → Stop → Compress to Opus (~30x smaller)
        → Upload to Groq Whisper API
        → Format with Groq LLM (punctuation, caps)
-       → xdotool types into focused window
+       → Pastes into focused window (Ctrl+V)
 ```
 
 ## Files

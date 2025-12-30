@@ -251,12 +251,12 @@ class RecordingRow(Gtk.Box):
 
         # Status / correction indicator
         if self.recording.get('user_correction'):
-            status_label = Gtk.Label(label="korrigiert")
+            status_label = Gtk.Label(label="corrected")
             status_label.add_css_class("success")
         elif self.recording.get('success'):
             status_label = Gtk.Label(label="")
         else:
-            status_label = Gtk.Label(label="Fehler")
+            status_label = Gtk.Label(label="Error")
             status_label.add_css_class("error")
         status_label.add_css_class("caption")
         header_content.append(status_label)
@@ -276,7 +276,7 @@ class RecordingRow(Gtk.Box):
         whisper_ms = self.recording.get('whisper_duration_ms') or 0
         llm_ms = self.recording.get('llm_duration_ms') or 0
         if total_ms > 0:
-            timing_label = Gtk.Label(label=f"Dauer: {total_ms}ms (Whisper: {whisper_ms}ms, LLM: {llm_ms}ms)")
+            timing_label = Gtk.Label(label=f"Duration: {total_ms}ms (Whisper: {whisper_ms}ms, LLM: {llm_ms}ms)")
             timing_label.add_css_class("caption")
             timing_label.add_css_class("dim-label")
             timing_label.set_xalign(0)
@@ -285,7 +285,7 @@ class RecordingRow(Gtk.Box):
         # Whisper output section
         whisper_out = self.recording.get('whisper_output') or ""
         whisper_group = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
-        whisper_header = Gtk.Label(label="Whisper (Rohtranskription)")
+        whisper_header = Gtk.Label(label="Whisper (Raw Transcription)")
         whisper_header.add_css_class("heading")
         whisper_header.set_xalign(0)
         whisper_group.append(whisper_header)
@@ -311,7 +311,7 @@ class RecordingRow(Gtk.Box):
         # LLM output section
         llm_out = self.recording.get('llm_output') or ""
         llm_group = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
-        llm_header = Gtk.Label(label="LLM (Formatiert)")
+        llm_header = Gtk.Label(label="LLM (Formatted)")
         llm_header.add_css_class("heading")
         llm_header.set_xalign(0)
         llm_group.append(llm_header)
@@ -336,7 +336,7 @@ class RecordingRow(Gtk.Box):
 
         # Correction section (editable!)
         corr_group = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
-        corr_header = Gtk.Label(label="Deine Korrektur (was du eigentlich meintest)")
+        corr_header = Gtk.Label(label="Your Correction (what you actually meant)")
         corr_header.add_css_class("heading")
         corr_header.add_css_class("accent")
         corr_header.set_xalign(0)
@@ -365,13 +365,13 @@ class RecordingRow(Gtk.Box):
         btn_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
 
         # Save button
-        save_btn = Gtk.Button(label="Korrektur speichern")
+        save_btn = Gtk.Button(label="Save Correction")
         save_btn.add_css_class("suggested-action")
         save_btn.connect("clicked", self._on_save)
         btn_row.append(save_btn)
 
         # Delete button
-        delete_btn = Gtk.Button(label="Löschen")
+        delete_btn = Gtk.Button(label="Delete")
         delete_btn.add_css_class("destructive-action")
         delete_btn.connect("clicked", self._on_delete)
         btn_row.append(delete_btn)
@@ -383,7 +383,7 @@ class RecordingRow(Gtk.Box):
         # Error message if any
         err_msg = self.recording.get('error_message') or ""
         if err_msg:
-            err_label = Gtk.Label(label=f"Fehler: {err_msg}")
+            err_label = Gtk.Label(label=f"Error: {err_msg}")
             err_label.add_css_class("error")
             err_label.set_xalign(0)
             err_label.set_wrap(True)
@@ -468,7 +468,7 @@ class FluesternGUI(Adw.Application):
 
         # Refresh button
         refresh_btn = Gtk.Button(icon_name="view-refresh-symbolic")
-        refresh_btn.set_tooltip_text("Aktualisieren")
+        refresh_btn.set_tooltip_text("Refresh")
         refresh_btn.connect("clicked", self.on_refresh)
         header.pack_start(refresh_btn)
 
@@ -479,7 +479,7 @@ class FluesternGUI(Adw.Application):
 
         # History page
         history_page = self.create_history_page()
-        self.stack.add_titled(history_page, "history", "Historie")
+        self.stack.add_titled(history_page, "history", "History")
 
         # Logs page
         logs_page = self.create_logs_page()
@@ -487,11 +487,11 @@ class FluesternGUI(Adw.Application):
 
         # Settings page
         settings_page = self.create_settings_page()
-        self.stack.add_titled(settings_page, "settings", "Einstellungen")
+        self.stack.add_titled(settings_page, "settings", "Settings")
 
         # Corrections page
         corrections_page = self.create_corrections_page()
-        self.stack.add_titled(corrections_page, "corrections", "Korrekturen")
+        self.stack.add_titled(corrections_page, "corrections", "Corrections")
 
         # View switcher
         switcher = Adw.ViewSwitcher()
@@ -567,7 +567,7 @@ class FluesternGUI(Adw.Application):
         recordings = self.db.get_all_recordings()
 
         if not recordings:
-            empty_label = Gtk.Label(label="Keine Aufnahmen vorhanden.\nStarte eine Aufnahme mit dem Voice Input Toggle.")
+            empty_label = Gtk.Label(label="No recordings yet.\nStart a recording with the Voice Input toggle.")
             empty_label.set_margin_top(50)
             empty_label.add_css_class("dim-label")
             self.history_box.append(empty_label)
@@ -596,7 +596,7 @@ class FluesternGUI(Adw.Application):
         box.append(info)
 
         # Clear button
-        clear_btn = Gtk.Button(label="Logs löschen")
+        clear_btn = Gtk.Button(label="Clear Logs")
         clear_btn.connect("clicked", self.on_clear_logs)
         box.append(clear_btn)
 
@@ -623,7 +623,7 @@ class FluesternGUI(Adw.Application):
                 content = f.read()
             self.log_buffer.set_text(content)
         else:
-            self.log_buffer.set_text("Keine Logs vorhanden.\n\nLogs werden beim nächsten Voice Input erstellt.")
+            self.log_buffer.set_text("No logs yet.\n\nLogs will be created on next voice input.")
 
     def on_clear_logs(self, button):
         if LOG_FILE.exists():
@@ -657,22 +657,22 @@ class FluesternGUI(Adw.Application):
         box.append(api_group)
 
         # Recording settings
-        rec_group = Adw.PreferencesGroup(title="Aufnahme")
+        rec_group = Adw.PreferencesGroup(title="Recording")
 
-        self.mic_entry = Adw.EntryRow(title="Mikrofon Source (leer = Standard)")
+        self.mic_entry = Adw.EntryRow(title="Microphone Source (empty = default)")
         self.mic_entry.set_text(self.config.get('MIC_SOURCE', ''))
         rec_group.add(self.mic_entry)
 
-        self.lang_entry = Adw.EntryRow(title="Sprache (z.B. 'de', 'en', leer = auto)")
+        self.lang_entry = Adw.EntryRow(title="Language (e.g. 'de', 'en', empty = auto)")
         self.lang_entry.set_text(self.config.get('LANGUAGE', ''))
         rec_group.add(self.lang_entry)
 
         box.append(rec_group)
 
         # UI settings
-        ui_group = Adw.PreferencesGroup(title="Oberfläche")
+        ui_group = Adw.PreferencesGroup(title="Interface")
 
-        self.notif_switch = Adw.SwitchRow(title="Benachrichtigungen")
+        self.notif_switch = Adw.SwitchRow(title="Notifications")
         self.notif_switch.set_active(self.config.get('NOTIFICATIONS', 'true').lower() == 'true')
         ui_group.add(self.notif_switch)
 
@@ -702,7 +702,7 @@ class FluesternGUI(Adw.Application):
         prompt_scroll.set_child(self.prompt_view)
         prompt_box.append(prompt_scroll)
 
-        reset_prompt_btn = Gtk.Button(label="Standard wiederherstellen")
+        reset_prompt_btn = Gtk.Button(label="Reset to Default")
         reset_prompt_btn.connect("clicked", self.on_reset_prompt)
         prompt_box.append(reset_prompt_btn)
 
@@ -710,7 +710,7 @@ class FluesternGUI(Adw.Application):
         box.append(prompt_group)
 
         # Save button
-        save_btn = Gtk.Button(label="Einstellungen speichern")
+        save_btn = Gtk.Button(label="Save Settings")
         save_btn.add_css_class("suggested-action")
         save_btn.connect("clicked", self.on_save_settings)
         box.append(save_btn)
@@ -736,7 +736,7 @@ class FluesternGUI(Adw.Application):
         self.config.save()
 
         # Show confirmation
-        toast = Adw.Toast(title="Einstellungen gespeichert!")
+        toast = Adw.Toast(title="Settings saved!")
         toast.set_timeout(2)
         # Note: Need toast overlay for this to work properly
         print("Settings saved!")
@@ -751,13 +751,13 @@ class FluesternGUI(Adw.Application):
 
         # Info
         info = Gtk.Label()
-        info.set_markup("<b>Gespeicherte Korrekturen</b>\n\nDiese Korrekturen werden dem LLM als Kontext gegeben,\num deine Aussprache besser zu verstehen.")
+        info.set_markup("<b>Saved Corrections</b>\n\nThese corrections are provided to the LLM as context\nto better understand your speech patterns.")
         info.set_xalign(0)
         info.set_wrap(True)
         box.append(info)
 
         # Export button
-        export_btn = Gtk.Button(label="Korrekturen als Prompt-Kontext exportieren")
+        export_btn = Gtk.Button(label="Export Corrections as Prompt Context")
         export_btn.connect("clicked", self.on_export_corrections)
         box.append(export_btn)
 
@@ -781,7 +781,7 @@ class FluesternGUI(Adw.Application):
         corrections = self.db.get_corrections()
 
         if not corrections:
-            empty = Gtk.Label(label="Noch keine Korrekturen.\n\nKlicke bei einer Aufnahme auf 'Korrigieren' um zu trainieren.")
+            empty = Gtk.Label(label="No corrections yet.\n\nClick 'Save Correction' on a recording to add training data.")
             empty.add_css_class("dim-label")
             empty.set_margin_top(30)
             self.corrections_box.append(empty)

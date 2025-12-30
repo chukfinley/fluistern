@@ -192,127 +192,206 @@ class EnvConfig:
 
 
 class RecordingRow(Gtk.Box):
-    """A single recording entry in the history list"""
+    """A single recording entry with inline editing"""
 
-    def __init__(self, recording, on_edit_callback):
-        super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=6)
-        self.recording = dict(recording)  # Convert from sqlite3.Row to dict
-        self.on_edit_callback = on_edit_callback
-        self.set_margin_top(8)
-        self.set_margin_bottom(8)
+    def __init__(self, recording, db, on_save_callback):
+        super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        self.recording = dict(recording)
+        self.db = db
+        self.on_save_callback = on_save_callback
+        self.expanded = False
+
+        self.add_css_class("card")
+        self.set_margin_top(6)
+        self.set_margin_bottom(6)
         self.set_margin_start(12)
         self.set_margin_end(12)
 
-        # Header with timestamp and status
-        header = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        # Header row (always visible) - clickable to expand
+        self.header_btn = Gtk.Button()
+        self.header_btn.add_css_class("flat")
+        self.header_btn.connect("clicked", self._toggle_expand)
 
-        # Parse and format timestamp
+        header_content = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        header_content.set_margin_top(12)
+        header_content.set_margin_bottom(12)
+        header_content.set_margin_start(12)
+        header_content.set_margin_end(12)
+
+        # Expand arrow
+        self.expand_icon = Gtk.Image.new_from_icon_name("pan-end-symbolic")
+        header_content.append(self.expand_icon)
+
+        # Timestamp
         timestamp = self.recording.get('timestamp', '')
         try:
             dt = datetime.fromisoformat(timestamp)
-            time_str = dt.strftime("%Y-%m-%d %H:%M:%S")
+            time_str = dt.strftime("%d.%m. %H:%M")
         except:
-            time_str = timestamp or "Unknown"
+            time_str = "?"
 
         time_label = Gtk.Label(label=time_str)
-        time_label.add_css_class("caption")
         time_label.add_css_class("dim-label")
-        header.append(time_label)
+        time_label.set_width_chars(12)
+        header_content.append(time_label)
+
+        # Preview of LLM output (or whisper if no LLM)
+        preview_text = self.recording.get('llm_output') or self.recording.get('whisper_output') or ""
+        preview = preview_text[:60] + ("..." if len(preview_text) > 60 else "")
+        preview_label = Gtk.Label(label=preview)
+        preview_label.set_xalign(0)
+        preview_label.set_hexpand(True)
+        preview_label.set_ellipsize(Pango.EllipsizeMode.END)
+        header_content.append(preview_label)
+
+        # Status / correction indicator
+        if self.recording.get('user_correction'):
+            status_label = Gtk.Label(label="korrigiert")
+            status_label.add_css_class("success")
+        elif self.recording.get('success'):
+            status_label = Gtk.Label(label="")
+        else:
+            status_label = Gtk.Label(label="Fehler")
+            status_label.add_css_class("error")
+        status_label.add_css_class("caption")
+        header_content.append(status_label)
+
+        self.header_btn.set_child(header_content)
+        self.append(self.header_btn)
+
+        # Expandable content area
+        self.detail_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        self.detail_box.set_margin_start(16)
+        self.detail_box.set_margin_end(16)
+        self.detail_box.set_margin_bottom(16)
+        self.detail_box.set_visible(False)
 
         # Duration info
         total_ms = self.recording.get('total_duration_ms') or 0
         whisper_ms = self.recording.get('whisper_duration_ms') or 0
         llm_ms = self.recording.get('llm_duration_ms') or 0
-
         if total_ms > 0:
-            duration_label = Gtk.Label(label=f"({total_ms}ms total, W:{whisper_ms}ms, L:{llm_ms}ms)")
-            duration_label.add_css_class("caption")
-            duration_label.add_css_class("dim-label")
-            header.append(duration_label)
+            timing_label = Gtk.Label(label=f"Dauer: {total_ms}ms (Whisper: {whisper_ms}ms, LLM: {llm_ms}ms)")
+            timing_label.add_css_class("caption")
+            timing_label.add_css_class("dim-label")
+            timing_label.set_xalign(0)
+            self.detail_box.append(timing_label)
 
-        # Status indicator
-        if self.recording.get('success'):
-            status = Gtk.Label(label="OK")
-            status.add_css_class("success")
-        else:
-            status = Gtk.Label(label="Error")
-            status.add_css_class("error")
-        status.add_css_class("caption")
-        header.append(status)
-
-        self.append(header)
-
-        # Whisper output
+        # Whisper output section
         whisper_out = self.recording.get('whisper_output') or ""
-        if whisper_out:
-            whisper_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=4)
-            whisper_label = Gtk.Label(label="Whisper:")
-            whisper_label.add_css_class("dim-label")
-            whisper_label.set_xalign(0)
-            whisper_box.append(whisper_label)
+        whisper_group = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+        whisper_header = Gtk.Label(label="Whisper (Rohtranskription)")
+        whisper_header.add_css_class("heading")
+        whisper_header.set_xalign(0)
+        whisper_group.append(whisper_header)
 
-            display_text = whisper_out[:100] + ("..." if len(whisper_out) > 100 else "")
-            whisper_text = Gtk.Label(label=display_text)
-            whisper_text.set_xalign(0)
-            whisper_text.set_wrap(True)
-            whisper_text.set_selectable(True)
-            whisper_box.append(whisper_text)
-            self.append(whisper_box)
+        whisper_frame = Gtk.Frame()
+        whisper_scroll = Gtk.ScrolledWindow()
+        whisper_scroll.set_min_content_height(60)
+        whisper_scroll.set_max_content_height(120)
+        self.whisper_view = Gtk.TextView()
+        self.whisper_view.set_editable(False)
+        self.whisper_view.set_wrap_mode(Gtk.WrapMode.WORD)
+        self.whisper_view.set_cursor_visible(False)
+        self.whisper_view.get_buffer().set_text(whisper_out)
+        self.whisper_view.set_margin_top(8)
+        self.whisper_view.set_margin_bottom(8)
+        self.whisper_view.set_margin_start(8)
+        self.whisper_view.set_margin_end(8)
+        whisper_scroll.set_child(self.whisper_view)
+        whisper_frame.set_child(whisper_scroll)
+        whisper_group.append(whisper_frame)
+        self.detail_box.append(whisper_group)
 
-        # LLM output
+        # LLM output section
         llm_out = self.recording.get('llm_output') or ""
-        if llm_out:
-            llm_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=4)
-            llm_label = Gtk.Label(label="LLM:")
-            llm_label.add_css_class("dim-label")
-            llm_label.set_xalign(0)
-            llm_box.append(llm_label)
+        llm_group = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+        llm_header = Gtk.Label(label="LLM (Formatiert)")
+        llm_header.add_css_class("heading")
+        llm_header.set_xalign(0)
+        llm_group.append(llm_header)
 
-            display_text = llm_out[:100] + ("..." if len(llm_out) > 100 else "")
-            llm_text = Gtk.Label(label=display_text)
-            llm_text.set_xalign(0)
-            llm_text.set_wrap(True)
-            llm_text.set_selectable(True)
-            llm_box.append(llm_text)
-            self.append(llm_box)
+        llm_frame = Gtk.Frame()
+        llm_scroll = Gtk.ScrolledWindow()
+        llm_scroll.set_min_content_height(60)
+        llm_scroll.set_max_content_height(120)
+        self.llm_view = Gtk.TextView()
+        self.llm_view.set_editable(False)
+        self.llm_view.set_wrap_mode(Gtk.WrapMode.WORD)
+        self.llm_view.set_cursor_visible(False)
+        self.llm_view.get_buffer().set_text(llm_out)
+        self.llm_view.set_margin_top(8)
+        self.llm_view.set_margin_bottom(8)
+        self.llm_view.set_margin_start(8)
+        self.llm_view.set_margin_end(8)
+        llm_scroll.set_child(self.llm_view)
+        llm_frame.set_child(llm_scroll)
+        llm_group.append(llm_frame)
+        self.detail_box.append(llm_group)
 
-        # User correction (if any)
+        # Correction section (editable!)
+        corr_group = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+        corr_header = Gtk.Label(label="Deine Korrektur (was du eigentlich meintest)")
+        corr_header.add_css_class("heading")
+        corr_header.add_css_class("accent")
+        corr_header.set_xalign(0)
+        corr_group.append(corr_header)
+
+        corr_frame = Gtk.Frame()
+        corr_frame.add_css_class("accent-border")
+        corr_scroll = Gtk.ScrolledWindow()
+        corr_scroll.set_min_content_height(80)
+        corr_scroll.set_max_content_height(150)
+        self.corr_view = Gtk.TextView()
+        self.corr_view.set_editable(True)
+        self.corr_view.set_wrap_mode(Gtk.WrapMode.WORD)
         user_corr = self.recording.get('user_correction') or ""
-        if user_corr:
-            corr_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=4)
-            corr_label = Gtk.Label(label="Korrektur:")
-            corr_label.add_css_class("accent")
-            corr_label.set_xalign(0)
-            corr_box.append(corr_label)
+        # Pre-fill with LLM output if no correction yet
+        self.corr_view.get_buffer().set_text(user_corr if user_corr else llm_out)
+        self.corr_view.set_margin_top(8)
+        self.corr_view.set_margin_bottom(8)
+        self.corr_view.set_margin_start(8)
+        self.corr_view.set_margin_end(8)
+        corr_scroll.set_child(self.corr_view)
+        corr_frame.set_child(corr_scroll)
+        corr_group.append(corr_frame)
 
-            corr_text = Gtk.Label(label=user_corr)
-            corr_text.set_xalign(0)
-            corr_text.set_wrap(True)
-            corr_text.set_selectable(True)
-            corr_box.append(corr_text)
-            self.append(corr_box)
+        # Save button
+        save_btn = Gtk.Button(label="Korrektur speichern")
+        save_btn.add_css_class("suggested-action")
+        save_btn.connect("clicked", self._on_save)
+        corr_group.append(save_btn)
 
-        # Error message (if any)
+        self.detail_box.append(corr_group)
+
+        # Error message if any
         err_msg = self.recording.get('error_message') or ""
         if err_msg:
             err_label = Gtk.Label(label=f"Fehler: {err_msg}")
             err_label.add_css_class("error")
             err_label.set_xalign(0)
-            self.append(err_label)
+            err_label.set_wrap(True)
+            self.detail_box.append(err_label)
 
-        # Edit button
-        edit_btn = Gtk.Button(label="Korrigieren")
-        edit_btn.add_css_class("flat")
-        edit_btn.connect("clicked", self._on_edit_clicked)
-        self.append(edit_btn)
+        self.append(self.detail_box)
 
-        # Separator
-        sep = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
-        sep.set_margin_top(8)
-        self.append(sep)
+    def _toggle_expand(self, button):
+        self.expanded = not self.expanded
+        self.detail_box.set_visible(self.expanded)
+        if self.expanded:
+            self.expand_icon.set_from_icon_name("pan-down-symbolic")
+        else:
+            self.expand_icon.set_from_icon_name("pan-end-symbolic")
 
-    def _on_edit_clicked(self, button):
-        self.on_edit_callback(self.recording)
+    def _on_save(self, button):
+        buffer = self.corr_view.get_buffer()
+        start, end = buffer.get_bounds()
+        correction = buffer.get_text(start, end, False).strip()
+
+        if correction:
+            recording_id = self.recording.get('id')
+            self.db.update_correction(recording_id, correction)
+            self.on_save_callback()
 
 
 class FluesternGUI(Adw.Application):
@@ -388,6 +467,25 @@ class FluesternGUI(Adw.Application):
         .accent { color: #3584e4; font-weight: bold; }
         .mono { font-family: monospace; font-size: 11px; }
         .log-entry { padding: 4px 8px; }
+        .card {
+            background: alpha(@card_bg_color, 0.8);
+            border-radius: 12px;
+            border: 1px solid alpha(@borders, 0.5);
+        }
+        .heading {
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+        .accent-border {
+            border: 2px solid #3584e4;
+            border-radius: 8px;
+        }
+        textview {
+            background: transparent;
+        }
+        textview text {
+            background: transparent;
+        }
         """
         provider = Gtk.CssProvider()
         provider.load_from_data(css)
@@ -424,43 +522,12 @@ class FluesternGUI(Adw.Application):
             self.history_box.append(empty_label)
         else:
             for rec in recordings:
-                row = RecordingRow(rec, self.on_edit_recording)
+                row = RecordingRow(rec, self.db, self._on_correction_saved)
                 self.history_box.append(row)
 
-    def on_edit_recording(self, recording):
-        """Open edit dialog for a recording"""
-        whisper_out = recording.get('whisper_output') or "(leer)"
-        llm_out = recording.get('llm_output') or "(leer)"
-
-        dialog = Adw.MessageDialog(
-            transient_for=self.win,
-            heading="Korrektur eingeben",
-            body=f"Whisper: {whisper_out}\nLLM: {llm_out}\n\nWas hast du eigentlich gemeint?"
-        )
-
-        # Add text entry
-        entry = Gtk.Entry()
-        default_text = recording.get('user_correction') or recording.get('llm_output') or recording.get('whisper_output') or ""
-        entry.set_text(default_text)
-        entry.set_margin_start(20)
-        entry.set_margin_end(20)
-        dialog.set_extra_child(entry)
-
-        dialog.add_response("cancel", "Abbrechen")
-        dialog.add_response("save", "Speichern")
-        dialog.set_response_appearance("save", Adw.ResponseAppearance.SUGGESTED)
-
-        dialog.connect("response", lambda d, r: self._on_edit_response(d, r, recording.get('id'), entry))
-        dialog.present()
-
-    def _on_edit_response(self, dialog, response, recording_id, entry):
-        if response == "save":
-            correction = entry.get_text().strip()
-            if correction:
-                self.db.update_correction(recording_id, correction)
-                self.refresh_history()
-                self.refresh_corrections()
-        dialog.close()
+    def _on_correction_saved(self):
+        """Called when a correction is saved - refresh the corrections tab"""
+        self.refresh_corrections()
 
     def create_logs_page(self):
         """Create the debug logs page"""

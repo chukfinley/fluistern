@@ -403,6 +403,33 @@ class FluesternGUI(Adw.Application):
         self.config = EnvConfig()
         self.connect("activate", self.on_activate)
 
+    def _is_tiling_wm(self):
+        """Detect if running under a tiling window manager"""
+        import subprocess
+
+        # Check XDG_CURRENT_DESKTOP - if empty, likely a standalone WM
+        desktop = os.environ.get('XDG_CURRENT_DESKTOP', '').lower()
+        if not desktop:
+            return True  # No DE = likely tiling WM
+
+        # Known tiling WMs/compositors
+        tiling_wms = ['dwm', 'i3', 'bspwm', 'sway', 'hyprland', 'awesome',
+                      'xmonad', 'qtile', 'herbstluftwm', 'river', 'leftwm']
+
+        if any(wm in desktop for wm in tiling_wms):
+            return True
+
+        # Also check running processes for common tiling WMs
+        try:
+            result = subprocess.run(['wmctrl', '-m'], capture_output=True, text=True, timeout=1)
+            wm_name = result.stdout.lower()
+            if any(wm in wm_name for wm in tiling_wms):
+                return True
+        except:
+            pass
+
+        return False
+
     def on_activate(self, app):
         # Create main window
         self.win = Adw.ApplicationWindow(application=app)
@@ -412,8 +439,11 @@ class FluesternGUI(Adw.Application):
         # Main layout
         main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
 
-        # Header bar
+        # Header bar - hide window controls on tiling WMs
         header = Adw.HeaderBar()
+        if self._is_tiling_wm():
+            header.set_show_end_title_buttons(False)
+            header.set_show_start_title_buttons(False)
 
         # Refresh button
         refresh_btn = Gtk.Button(icon_name="view-refresh-symbolic")

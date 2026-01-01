@@ -25,6 +25,13 @@ command -v ffmpeg >/dev/null 2>&1 || MISSING+=("ffmpeg")
 command -v pw-record >/dev/null 2>&1 || MISSING+=("pipewire")
 command -v notify-send >/dev/null 2>&1 || MISSING+=("libnotify")
 command -v yad >/dev/null 2>&1 || MISSING+=("yad")
+command -v python3 >/dev/null 2>&1 || MISSING+=("python3")
+command -v sqlite3 >/dev/null 2>&1 || MISSING+=("sqlite3")
+
+# Check Python GTK dependencies
+if command -v python3 >/dev/null 2>&1; then
+    python3 -c "import gi; gi.require_version('Gtk', '4.0'); gi.require_version('Adw', '1')" 2>/dev/null || MISSING+=("python-gobject" "libadwaita")
+fi
 
 if [[ ${#MISSING[@]} -gt 0 ]]; then
     echo "Missing packages: ${MISSING[*]}"
@@ -66,7 +73,9 @@ cp "$SCRIPT_DIR/voice-input.sh" "$INSTALL_DIR/"
 cp "$SCRIPT_DIR/voice-input-daemon.sh" "$INSTALL_DIR/"
 cp "$SCRIPT_DIR/select-mic.sh" "$INSTALL_DIR/"
 cp "$SCRIPT_DIR/select-language.sh" "$INSTALL_DIR/"
+cp "$SCRIPT_DIR/gui.py" "$INSTALL_DIR/"
 chmod +x "$INSTALL_DIR"/*.sh
+chmod +x "$INSTALL_DIR/gui.py"
 
 # Create .env from example if it doesn't exist
 if [[ ! -f "$INSTALL_DIR/.env" ]]; then

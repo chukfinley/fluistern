@@ -109,13 +109,21 @@ export component RecordingCard inherits Rectangle {
                 Rectangle {
                     background: #0d0d0d;
                     border-radius: 2px;
-                    min-height: 60px;
+                    border-width: 1px;
+                    border-color: #222;
+                    height: 50px;
 
-                    TextEdit {
-                        text: recording.whisper_output;
-                        read-only: true;
-                        wrap: word-wrap;
-                        font-size: 11px;
+                    ScrollView {
+                        VerticalLayout {
+                            padding: 4px;
+
+                            Text {
+                                text: recording.whisper_output;
+                                wrap: word-wrap;
+                                font-size: 11px;
+                                color: #aaa;
+                            }
+                        }
                     }
                 }
             }
@@ -133,13 +141,21 @@ export component RecordingCard inherits Rectangle {
                 Rectangle {
                     background: #0d0d0d;
                     border-radius: 2px;
-                    min-height: 60px;
+                    border-width: 1px;
+                    border-color: #222;
+                    height: 50px;
 
-                    TextEdit {
-                        text: recording.llm_output;
-                        read-only: true;
-                        wrap: word-wrap;
-                        font-size: 11px;
+                    ScrollView {
+                        VerticalLayout {
+                            padding: 4px;
+
+                            Text {
+                                text: recording.llm_output;
+                                wrap: word-wrap;
+                                font-size: 11px;
+                                color: #aaa;
+                            }
+                        }
                     }
                 }
             }
@@ -159,12 +175,14 @@ export component RecordingCard inherits Rectangle {
                     border-radius: 2px;
                     border-width: 1px;
                     border-color: #4a9;
-                    min-height: 70px;
+                    height: 60px;
 
-                    correction_edit := TextEdit {
-                        text: recording.user_correction != "" ? recording.user_correction : recording.llm_output;
-                        wrap: word-wrap;
-                        font-size: 11px;
+                    ScrollView {
+                        correction_edit := TextEdit {
+                            text: recording.user_correction != "" ? recording.user_correction : recording.llm_output;
+                            wrap: word-wrap;
+                            font-size: 11px;
+                        }
                     }
                 }
             }

@@ -8,11 +8,13 @@ A lightweight voice-to-text tool that uses Groq's Whisper API for transcription 
 
 - **Fast transcription** using Groq's Whisper Large V3 Turbo
 - **Smart formatting** with automatic punctuation and capitalization
+- **Rust-powered GUI** - CPU-optimized settings & history interface
 - **System tray icon** with status indicators
 - **50+ languages** including Hindi, Arabic, Chinese, and more
 - **Microphone selection** via tray menu
 - **Keyboard shortcut** toggle (start/stop recording)
 - **Pastes directly** into any focused text field
+- **Recording history** with corrections and timing data
 
 ## Demo
 
@@ -27,6 +29,8 @@ A lightweight voice-to-text tool that uses Groq's Whisper API for transcription 
 
 - Linux with X11 or Wayland
 - PipeWire or PulseAudio
+- Rust/Cargo (for building GUI)
+- GTK4 and libadwaita (for GUI)
 - Groq API key (free tier available)
 
 ## Installation
@@ -38,11 +42,12 @@ cd fluistern
 ```
 
 The installer will:
-1. Install dependencies (if needed)
-2. Copy files to `~/.local/share/fluistern/`
-3. Create `fluistern` command in `~/.local/bin/`
-4. Set up systemd service
-5. Prompt for Groq API key
+1. Check and install dependencies (if needed)
+2. Build the Rust GUI (Release mode, optimized)
+3. Copy files to `~/.local/share/fluistern/`
+4. Create `fluistern` command in `~/.local/bin/`
+5. Set up systemd service
+6. Prompt for Groq API key
 
 After install, you can delete the cloned folder.
 
@@ -50,6 +55,10 @@ After install, you can delete the cloned folder.
 
 The installer will check for these:
 
+**Required:**
+- `cargo` / `rust` - Rust toolchain for building GUI
+- `libgtk-4-dev` - GTK4 development libraries
+- `libadwaita-1-dev` - libadwaita development libraries
 - `yad` - tray icon
 - `xdotool` - simulating paste
 - `xclip` - clipboard access
@@ -57,6 +66,17 @@ The installer will check for these:
 - `jq` - JSON parsing
 - `curl` - API calls
 - `pw-record` (PipeWire)
+- `sqlite3` - database for recording history
+
+**On Ubuntu/Debian:**
+```bash
+sudo apt install cargo libgtk-4-dev libadwaita-1-dev yad xdotool xclip ffmpeg jq curl pipewire sqlite3
+```
+
+**On Arch/Manjaro:**
+```bash
+sudo pacman -S rust gtk4 libadwaita yad xdotool xclip ffmpeg jq curl pipewire sqlite3
+```
 
 ## Configuration
 
@@ -101,9 +121,18 @@ Add a keybinding in your WM config to run `fluistern`:
 ### Tray Menu (right-click)
 
 - **Toggle Recording** - Start/stop recording
+- **Einstellungen & Historie** - Open GUI for settings, logs, and recording history
 - **Select Microphone** - Choose input device
 - **Select Language** - Set transcription language (50+ languages)
 - **Quit** - Stop the daemon
+
+### GUI Features
+
+Open the GUI from the tray menu to access:
+- **Recording History** - View all recordings with transcriptions and timings
+- **Corrections** - Teach the system by correcting misheard words
+- **Debug Logs** - Real-time logs for troubleshooting
+- **Settings** - Configure API key, language, microphone, system prompt
 
 ## Supported Languages
 
@@ -124,11 +153,13 @@ Keybind → Stop → Compress to Opus (~30x smaller)
 After installation:
 ```
 ~/.local/share/fluistern/
+├── fluistern-gui           # Rust GUI binary (settings, history, logs)
 ├── voice-input.sh          # Main toggle script
 ├── voice-input-daemon.sh   # Tray daemon
 ├── select-mic.sh           # Microphone selector
 ├── select-language.sh      # Language selector
 ├── .env                    # Your config (API key, language, mic)
+├── history.db              # SQLite database for recordings
 └── icons/                  # Tray icons
 
 ~/.local/bin/fluistern      # Symlink to run the tool

@@ -1,0 +1,15 @@
+[package]
+name = "fluistern-gui"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "fluistern-gui"
+path = "src/main.rs"
+
+[dependencies]
+gtk4 = { version = "0.9", package = "gtk4", features = ["v4_10"] }
+libadwaita = { version = "0.7", package = "libadwaita", features = ["v1_4"] }
+rusqlite = { version = "0.32", features = ["bundled"] }
+chrono = "0.4"
+glib = "0.20"

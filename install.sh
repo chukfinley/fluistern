@@ -25,12 +25,15 @@ command -v ffmpeg >/dev/null 2>&1 || MISSING+=("ffmpeg")
 command -v pw-record >/dev/null 2>&1 || MISSING+=("pipewire")
 command -v notify-send >/dev/null 2>&1 || MISSING+=("libnotify")
 command -v yad >/dev/null 2>&1 || MISSING+=("yad")
-command -v python3 >/dev/null 2>&1 || MISSING+=("python3")
 command -v sqlite3 >/dev/null 2>&1 || MISSING+=("sqlite3")
+command -v cargo >/dev/null 2>&1 || MISSING+=("cargo" "rust")
 
-# Check Python GTK dependencies
-if command -v python3 >/dev/null 2>&1; then
-    python3 -c "import gi; gi.require_version('Gtk', '4.0'); gi.require_version('Adw', '1')" 2>/dev/null || MISSING+=("python-gobject" "libadwaita")
+# Check GTK4 and libadwaita development libraries
+if ! pkg-config --exists gtk4 2>/dev/null; then
+    MISSING+=("gtk4" "libgtk-4-dev")
+fi
+if ! pkg-config --exists libadwaita-1 2>/dev/null; then
+    MISSING+=("libadwaita-1-dev")
 fi
 
 if [[ ${#MISSING[@]} -gt 0 ]]; then
@@ -62,6 +65,17 @@ fi
 echo "All dependencies installed!"
 echo
 
+# Build Rust GUI
+echo "Building Rust GUI..."
+cd "$SCRIPT_DIR"
+cargo build --release
+if [[ $? -ne 0 ]]; then
+    echo "Failed to build Rust GUI"
+    exit 1
+fi
+echo "Rust GUI built successfully!"
+echo
+
 # Install files to ~/.local/share/fluistern
 echo "Installing to $INSTALL_DIR..."
 mkdir -p "$INSTALL_DIR"
@@ -73,9 +87,9 @@ cp "$SCRIPT_DIR/voice-input.sh" "$INSTALL_DIR/"
 cp "$SCRIPT_DIR/voice-input-daemon.sh" "$INSTALL_DIR/"
 cp "$SCRIPT_DIR/select-mic.sh" "$INSTALL_DIR/"
 cp "$SCRIPT_DIR/select-language.sh" "$INSTALL_DIR/"
-cp "$SCRIPT_DIR/gui.py" "$INSTALL_DIR/"
+cp "$SCRIPT_DIR/target/release/fluistern-gui" "$INSTALL_DIR/"
 chmod +x "$INSTALL_DIR"/*.sh
-chmod +x "$INSTALL_DIR/gui.py"
+chmod +x "$INSTALL_DIR/fluistern-gui"
 
 # Create .env from example if it doesn't exist
 if [[ ! -f "$INSTALL_DIR/.env" ]]; then

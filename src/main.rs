@@ -337,8 +337,9 @@ fn create_recording_row(recording: Recording, db: Arc<Database>, state: Rc<AppSt
         .or(recording.whisper_output.as_ref())
         .map(|s| s.as_str())
         .unwrap_or("");
-    let preview = if preview_text.len() > 60 {
-        format!("{}...", &preview_text[..60])
+    let preview = if preview_text.chars().count() > 60 {
+        let truncated: String = preview_text.chars().take(60).collect();
+        format!("{}...", truncated)
     } else {
         preview_text.to_string()
     };

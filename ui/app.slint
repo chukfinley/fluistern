@@ -25,157 +25,156 @@ export component RecordingCard inherits Rectangle {
 
     property <bool> expanded: false;
 
-    background: #f8f9fa;
-    border-radius: 12px;
+    background: #1a1a1a;
+    border-radius: 4px;
     border-width: 1px;
-    border-color: #e0e0e0;
+    border-color: #333;
 
     VerticalBox {
-        padding: 12px;
-        spacing: 8px;
+        padding: 8px;
+        spacing: 4px;
 
-        // Header (always visible)
+        // Header
         HorizontalBox {
-            spacing: 12px;
+            spacing: 8px;
 
             TouchArea {
                 clicked => { expanded = !expanded; }
 
                 HorizontalBox {
-                    spacing: 12px;
+                    spacing: 8px;
 
                     Text {
                         text: expanded ? "▼" : "▶";
-                        font-size: 14px;
+                        font-size: 12px;
+                        color: #666;
                         vertical-alignment: center;
                     }
 
                     Text {
                         text: recording.timestamp;
-                        color: #6c757d;
-                        font-size: 12px;
+                        color: #666;
+                        font-size: 11px;
                         vertical-alignment: center;
-                        min-width: 120px;
+                        min-width: 100px;
                     }
 
                     Text {
                         text: recording.llm_output != "" ? recording.llm_output : recording.whisper_output;
+                        color: #aaa;
+                        font-size: 12px;
                         horizontal-alignment: left;
                         vertical-alignment: center;
                         overflow: elide;
                     }
 
                     if recording.user_correction != "": Text {
-                        text: "✓ corrected";
-                        color: #28a745;
-                        font-size: 12px;
+                        text: "✓";
+                        color: #4a9;
+                        font-size: 11px;
                         vertical-alignment: center;
                     }
 
                     if !recording.success: Text {
-                        text: "⚠ Error";
-                        color: #dc3545;
-                        font-size: 12px;
+                        text: "✗";
+                        color: #d44;
+                        font-size: 11px;
                         vertical-alignment: center;
                     }
                 }
             }
         }
 
-        // Details (expandable)
+        // Details
         if expanded: VerticalBox {
-            spacing: 12px;
-            padding-top: 8px;
+            spacing: 8px;
+            padding-top: 4px;
 
-            // Duration info
             if recording.total_duration_ms > 0: Text {
-                text: "Duration: " + recording.total_duration_ms + "ms (Whisper: " + recording.whisper_duration_ms + "ms, LLM: " + recording.llm_duration_ms + "ms)";
-                font-size: 11px;
-                color: #6c757d;
+                text: recording.total_duration_ms + "ms | W:" + recording.whisper_duration_ms + "ms L:" + recording.llm_duration_ms + "ms";
+                font-size: 10px;
+                color: #555;
             }
 
-            // Whisper output
+            // Whisper
             VerticalBox {
-                spacing: 4px;
+                spacing: 2px;
 
                 Text {
-                    text: "Whisper (Raw Transcription)";
-                    font-weight: 600;
-                    font-size: 13px;
+                    text: "WHISPER";
+                    font-size: 10px;
+                    color: #666;
                 }
 
                 Rectangle {
-                    background: white;
-                    border-radius: 6px;
-                    border-width: 1px;
-                    border-color: #dee2e6;
-                    min-height: 80px;
+                    background: #0d0d0d;
+                    border-radius: 2px;
+                    min-height: 60px;
 
                     TextEdit {
                         text: recording.whisper_output;
                         read-only: true;
                         wrap: word-wrap;
+                        font-size: 11px;
                     }
                 }
             }
 
-            // LLM output
+            // LLM
             VerticalBox {
-                spacing: 4px;
+                spacing: 2px;
 
                 Text {
-                    text: "LLM (Formatted)";
-                    font-weight: 600;
-                    font-size: 13px;
+                    text: "LLM";
+                    font-size: 10px;
+                    color: #666;
                 }
 
                 Rectangle {
-                    background: white;
-                    border-radius: 6px;
-                    border-width: 1px;
-                    border-color: #dee2e6;
-                    min-height: 80px;
+                    background: #0d0d0d;
+                    border-radius: 2px;
+                    min-height: 60px;
 
                     TextEdit {
                         text: recording.llm_output;
                         read-only: true;
                         wrap: word-wrap;
+                        font-size: 11px;
                     }
                 }
             }
 
-            // Correction field
+            // Correction
             VerticalBox {
-                spacing: 4px;
+                spacing: 2px;
 
                 Text {
-                    text: "Your Correction (what you actually meant)";
-                    font-weight: 600;
-                    font-size: 13px;
-                    color: #0d6efd;
+                    text: "CORRECTION";
+                    font-size: 10px;
+                    color: #4a9;
                 }
 
                 Rectangle {
-                    background: #f0f8ff;
-                    border-radius: 6px;
-                    border-width: 2px;
-                    border-color: #0d6efd;
-                    min-height: 100px;
+                    background: #0a0f0a;
+                    border-radius: 2px;
+                    border-width: 1px;
+                    border-color: #4a9;
+                    min-height: 70px;
 
                     correction_edit := TextEdit {
                         text: recording.user_correction != "" ? recording.user_correction : recording.llm_output;
                         wrap: word-wrap;
+                        font-size: 11px;
                     }
                 }
             }
 
             // Buttons
             HorizontalBox {
-                spacing: 8px;
+                spacing: 6px;
 
                 Button {
-                    text: "Save Correction";
-                    primary: true;
+                    text: "Save";
                     clicked => {
                         save_correction(correction_edit.text);
                     }
@@ -189,10 +188,10 @@ export component RecordingCard inherits Rectangle {
                 }
             }
 
-            // Error message
             if recording.error_message != "": Text {
                 text: "Error: " + recording.error_message;
-                color: #dc3545;
+                color: #d44;
+                font-size: 11px;
                 wrap: word-wrap;
             }
         }
@@ -203,6 +202,7 @@ export component MainWindow inherits Window {
     title: "Flüstern";
     preferred-width: 900px;
     preferred-height: 700px;
+    background: #0d0d0d;
 
     callback refresh();
     callback save_correction(int, string);
@@ -226,25 +226,25 @@ export component MainWindow inherits Window {
 
         // Header
         Rectangle {
-            height: 50px;
-            background: #0d6efd;
+            height: 40px;
+            background: #1a1a1a;
 
             HorizontalBox {
-                padding: 10px;
-                spacing: 10px;
+                padding: 8px;
+                spacing: 8px;
 
                 Text {
                     text: "Flüstern";
-                    color: white;
-                    font-size: 20px;
-                    font-weight: 700;
+                    color: #aaa;
+                    font-size: 14px;
+                    font-weight: 600;
                     vertical-alignment: center;
                 }
 
                 Rectangle { } // Spacer
 
                 Button {
-                    text: "🔄 Refresh";
+                    text: "↻";
                     clicked => { refresh(); }
                 }
             }
@@ -252,263 +252,263 @@ export component MainWindow inherits Window {
 
         // Main content
         TabWidget {
-            // History tab
+            // History
             Tab {
-                title: "📝 History";
+                title: "History";
 
-                VerticalBox {
-                    padding: 12px;
+                Rectangle {
+                    background: #0d0d0d;
 
-                    if recordings.length == 0: VerticalBox {
-                        alignment: center;
+                    VerticalBox {
+                        padding: 8px;
 
-                        Text {
-                            text: "No recordings yet.\nStart a recording with the Voice Input toggle.";
-                            color: #6c757d;
-                            horizontal-alignment: center;
-                            font-size: 14px;
+                        if recordings.length == 0: VerticalBox {
+                            alignment: center;
+
+                            Text {
+                                text: "No recordings yet";
+                                color: #555;
+                                horizontal-alignment: center;
+                                font-size: 12px;
+                            }
+                        }
+
+                        if recordings.length > 0: ScrollView {
+                            viewport-height: recordings.length * 100px;
+
+                            VerticalBox {
+                                spacing: 4px;
+
+                                for rec[idx] in recordings: RecordingCard {
+                                    recording: rec;
+                                    save_correction(text) => {
+                                        save_correction(rec.id, text);
+                                    }
+                                    delete_recording => {
+                                        delete_recording(rec.id);
+                                    }
+                                }
+                            }
                         }
                     }
+                }
+            }
 
-                    if recordings.length > 0: ScrollView {
-                        viewport-height: recordings.length * 120px;
+            // Logs
+            Tab {
+                title: "Logs";
 
-                        VerticalBox {
+                Rectangle {
+                    background: #0d0d0d;
+
+                    VerticalBox {
+                        padding: 8px;
+                        spacing: 6px;
+
+                        HorizontalBox {
                             spacing: 8px;
 
-                            for rec[idx] in recordings: RecordingCard {
-                                recording: rec;
-                                save_correction(text) => {
-                                    save_correction(rec.id, text);
-                                }
-                                delete_recording => {
-                                    delete_recording(rec.id);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Logs tab
-            Tab {
-                title: "🪲 Debug Logs";
-
-                VerticalBox {
-                    padding: 12px;
-                    spacing: 8px;
-
-                    Text {
-                        text: "Debug-Logs vom Voice Input Script";
-                        color: #6c757d;
-                        font-size: 13px;
-                    }
-
-                    Button {
-                        text: "Clear Logs";
-                        clicked => { clear_logs(); }
-                    }
-
-                    Rectangle {
-                        background: #1e1e1e;
-                        border-radius: 6px;
-
-                        ScrollView {
-                            TextEdit {
-                                text: logs;
-                                font-size: 11px;
-                                read-only: true;
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Settings tab
-            Tab {
-                title: "⚙️ Settings";
-
-                ScrollView {
-                    VerticalBox {
-                        padding: 20px;
-                        spacing: 20px;
-
-                        // API Configuration
-                        VerticalBox {
-                            spacing: 10px;
-
                             Text {
-                                text: "API Configuration";
-                                font-size: 16px;
-                                font-weight: 600;
+                                text: "Debug Logs";
+                                color: #666;
+                                font-size: 11px;
+                                vertical-alignment: center;
                             }
 
+                            Rectangle { }
+
+                            Button {
+                                text: "Clear";
+                                clicked => { clear_logs(); }
+                            }
+                        }
+
+                        Rectangle {
+                            background: #000;
+                            border-radius: 2px;
+
+                            ScrollView {
+                                TextEdit {
+                                    text: logs;
+                                    font-size: 10px;
+                                    read-only: true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Settings
+            Tab {
+                title: "Settings";
+
+                Rectangle {
+                    background: #0d0d0d;
+
+                    ScrollView {
+                        VerticalBox {
+                            padding: 12px;
+                            spacing: 12px;
+
+                            // API
                             VerticalBox {
                                 spacing: 4px;
 
-                                Text { text: "Groq API Key"; font-size: 13px; }
+                                Text {
+                                    text: "API";
+                                    font-size: 11px;
+                                    color: #666;
+                                }
+
                                 api_entry := LineEdit {
                                     text: api_key;
-                                    placeholder-text: "Enter your Groq API key";
+                                    placeholder-text: "Groq API Key";
                                 }
                             }
-                        }
 
-                        // Recording settings
-                        VerticalBox {
-                            spacing: 10px;
-
-                            Text {
-                                text: "Recording";
-                                font-size: 16px;
-                                font-weight: 600;
-                            }
-
+                            // Recording
                             VerticalBox {
                                 spacing: 4px;
 
-                                Text { text: "Microphone Source (empty = default)"; font-size: 13px; }
+                                Text {
+                                    text: "Recording";
+                                    font-size: 11px;
+                                    color: #666;
+                                }
+
                                 mic_entry := LineEdit {
                                     text: mic_source;
-                                    placeholder-text: "Leave empty for default";
+                                    placeholder-text: "Mic source (empty = default)";
+                                }
+
+                                lang_entry := LineEdit {
+                                    text: language;
+                                    placeholder-text: "Language (de, en, ...)";
                                 }
                             }
 
+                            // Interface
                             VerticalBox {
                                 spacing: 4px;
 
-                                Text { text: "Language (e.g. 'de', 'en', empty = auto)"; font-size: 13px; }
-                                lang_entry := LineEdit {
-                                    text: language;
-                                    placeholder-text: "en, de, es, fr, etc.";
+                                Text {
+                                    text: "Interface";
+                                    font-size: 11px;
+                                    color: #666;
+                                }
+
+                                notif_check := CheckBox {
+                                    text: "Notifications";
+                                    checked: notifications;
+                                }
+
+                                tray_check := CheckBox {
+                                    text: "Tray Icon";
+                                    checked: tray_icon;
                                 }
                             }
-                        }
 
-                        // Interface settings
-                        VerticalBox {
-                            spacing: 10px;
+                            // System prompt
+                            VerticalBox {
+                                spacing: 4px;
 
-                            Text {
-                                text: "Interface";
-                                font-size: 16px;
-                                font-weight: 600;
-                            }
+                                HorizontalBox {
+                                    spacing: 8px;
 
-                            notif_check := CheckBox {
-                                text: "Notifications";
-                                checked: notifications;
-                            }
+                                    Text {
+                                        text: "System Prompt";
+                                        font-size: 11px;
+                                        color: #666;
+                                    }
 
-                            tray_check := CheckBox {
-                                text: "Tray Icon";
-                                checked: tray_icon;
-                            }
-                        }
+                                    Rectangle { }
 
-                        // System prompt
-                        VerticalBox {
-                            spacing: 10px;
+                                    Button {
+                                        text: "Reset";
+                                        clicked => { reset_prompt(); }
+                                    }
+                                }
 
-                            Text {
-                                text: "System Prompt";
-                                font-size: 16px;
-                                font-weight: 600;
-                            }
+                                Rectangle {
+                                    background: #0a0a0a;
+                                    border-radius: 2px;
+                                    height: 150px;
 
-                            Text {
-                                text: "Der System Prompt wird dem LLM gegeben, um die Formatierung zu steuern:";
-                                color: #6c757d;
-                                font-size: 12px;
-                                wrap: word-wrap;
-                            }
-
-                            Rectangle {
-                                background: white;
-                                border-radius: 6px;
-                                border-width: 1px;
-                                border-color: #dee2e6;
-                                height: 200px;
-
-                                prompt_edit := TextEdit {
-                                    text: system_prompt;
-                                    wrap: word-wrap;
+                                    prompt_edit := TextEdit {
+                                        text: system_prompt;
+                                        wrap: word-wrap;
+                                        font-size: 10px;
+                                    }
                                 }
                             }
 
                             Button {
-                                text: "Reset to Default";
-                                clicked => { reset_prompt(); }
-                            }
-                        }
-
-                        Button {
-                            text: "💾 Save Settings";
-                            primary: true;
-                            clicked => {
-                                save_settings(
-                                    api_entry.text,
-                                    mic_entry.text,
-                                    lang_entry.text,
-                                    notif_check.checked,
-                                    tray_check.checked,
-                                    prompt_edit.text
-                                );
+                                text: "Save Settings";
+                                clicked => {
+                                    save_settings(
+                                        api_entry.text,
+                                        mic_entry.text,
+                                        lang_entry.text,
+                                        notif_check.checked,
+                                        tray_check.checked,
+                                        prompt_edit.text
+                                    );
+                                }
                             }
                         }
                     }
                 }
             }
 
-            // Corrections tab
+            // Corrections
             Tab {
-                title: "✏️ Corrections";
+                title: "Corrections";
 
-                VerticalBox {
-                    padding: 12px;
-                    spacing: 12px;
+                Rectangle {
+                    background: #0d0d0d;
 
-                    Text {
-                        text: "Saved Corrections";
-                        font-size: 16px;
-                        font-weight: 700;
-                    }
+                    VerticalBox {
+                        padding: 8px;
+                        spacing: 8px;
 
-                    Text {
-                        text: "These corrections are provided to the LLM as context to better understand your speech patterns.";
-                        color: #6c757d;
-                        font-size: 13px;
-                        wrap: word-wrap;
-                    }
+                        Text {
+                            text: "Saved Corrections";
+                            font-size: 12px;
+                            color: #aaa;
+                        }
 
-                    if corrections.length == 0: Text {
-                        text: "No corrections yet.\n\nClick 'Save Correction' on a recording to add training data.";
-                        color: #6c757d;
-                        horizontal-alignment: center;
-                    }
+                        if corrections.length == 0: Text {
+                            text: "No corrections yet";
+                            color: #555;
+                            font-size: 11px;
+                        }
 
-                    if corrections.length > 0: ScrollView {
-                        VerticalBox {
-                            spacing: 6px;
+                        if corrections.length > 0: ScrollView {
+                            VerticalBox {
+                                spacing: 4px;
 
-                            for corr in corrections: HorizontalBox {
-                                spacing: 12px;
-                                padding: 8px;
+                                for corr in corrections: HorizontalBox {
+                                    spacing: 8px;
+                                    padding: 4px;
 
-                                Text {
-                                    text: "\"" + corr.whisper_pattern + "\"";
-                                    color: #6c757d;
-                                }
+                                    Text {
+                                        text: "\"" + corr.whisper_pattern + "\"";
+                                        color: #666;
+                                        font-size: 11px;
+                                    }
 
-                                Text {
-                                    text: "→";
-                                    font-size: 14px;
-                                }
+                                    Text {
+                                        text: "→";
+                                        color: #555;
+                                        font-size: 11px;
+                                    }
 
-                                Text {
-                                    text: "\"" + corr.intended_text + "\"";
-                                    color: #0d6efd;
-                                    font-weight: 600;
+                                    Text {
+                                        text: "\"" + corr.intended_text + "\"";
+                                        color: #4a9;
+                                        font-size: 11px;
+                                    }
                                 }
                             }
                         }

@@ -8,7 +8,8 @@ A lightweight voice-to-text tool that uses Groq's Whisper API for transcription 
 
 - **Fast transcription** using Groq's Whisper Large V3 Turbo
 - **Smart formatting** with automatic punctuation and capitalization
-- **Rust-powered GUI** - CPU-optimized settings & history interface
+- **Modern Slint GUI** - Beautiful, fast, cross-platform UI
+- **CPU-optimized** - No more high CPU usage after closing
 - **System tray icon** with status indicators
 - **50+ languages** including Hindi, Arabic, Chinese, and more
 - **Microphone selection** via tray menu
@@ -30,7 +31,6 @@ A lightweight voice-to-text tool that uses Groq's Whisper API for transcription 
 - Linux with X11 or Wayland
 - PipeWire or PulseAudio
 - Rust/Cargo (for building GUI)
-- GTK4 and libadwaita (for GUI)
 - Groq API key (free tier available)
 
 ## Installation
@@ -43,7 +43,7 @@ cd fluistern
 
 The installer will:
 1. Check and install dependencies (if needed)
-2. Build the Rust GUI (Release mode, optimized)
+2. Build the modern Slint GUI (Release mode, optimized)
 3. Copy files to `~/.local/share/fluistern/`
 4. Create `fluistern` command in `~/.local/bin/`
 5. Set up systemd service
@@ -57,8 +57,6 @@ The installer will check for these:
 
 **Required:**
 - `cargo` / `rust` - Rust toolchain for building GUI
-- `libgtk-4-dev` - GTK4 development libraries
-- `libadwaita-1-dev` - libadwaita development libraries
 - `yad` - tray icon
 - `xdotool` - simulating paste
 - `xclip` - clipboard access
@@ -70,12 +68,12 @@ The installer will check for these:
 
 **On Ubuntu/Debian:**
 ```bash
-sudo apt install cargo libgtk-4-dev libadwaita-1-dev yad xdotool xclip ffmpeg jq curl pipewire sqlite3
+sudo apt install cargo yad xdotool xclip ffmpeg jq curl pipewire sqlite3
 ```
 
 **On Arch/Manjaro:**
 ```bash
-sudo pacman -S rust gtk4 libadwaita yad xdotool xclip ffmpeg jq curl pipewire sqlite3
+sudo pacman -S rust yad xdotool xclip ffmpeg jq curl pipewire sqlite3
 ```
 
 ## Configuration
@@ -128,11 +126,17 @@ Add a keybinding in your WM config to run `fluistern`:
 
 ### GUI Features
 
-Open the GUI from the tray menu to access:
-- **Recording History** - View all recordings with transcriptions and timings
-- **Corrections** - Teach the system by correcting misheard words
-- **Debug Logs** - Real-time logs for troubleshooting
-- **Settings** - Configure API key, language, microphone, system prompt
+Open the modern Slint-based GUI from the tray menu to access:
+- **📝 Recording History** - View all recordings with expandable cards showing Whisper raw output, LLM formatted output, and correction fields
+- **✏️ Corrections** - Teach the system by correcting misheard words
+- **🪲 Debug Logs** - Real-time logs with auto-refresh for troubleshooting
+- **⚙️ Settings** - Configure API key, language, microphone, system prompt
+
+The GUI features a clean, modern design with:
+- Tabbed interface for easy navigation
+- Expandable recording cards
+- Real-time log monitoring (only refreshes when file changes - CPU optimized!)
+- Professional blue color scheme
 
 ## Supported Languages
 

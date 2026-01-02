@@ -463,7 +463,10 @@ class FluesternGUI(Adw.Application):
         super().__init__(application_id="de.fluistern.gui")
         self.db = Database()
         self.config = EnvConfig()
+        self.log_watcher_id = None
+        self.last_log_mtime = 0
         self.connect("activate", self.on_activate)
+        self.connect("shutdown", self.on_shutdown)
 
     def _is_tiling_wm(self):
         """Detect if running under a tiling window manager"""

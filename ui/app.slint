@@ -1,0 +1,520 @@
+import { Button, VerticalBox, HorizontalBox, TabWidget, TextEdit, ScrollView, LineEdit, CheckBox } from "std-widgets.slint";
+
+export struct Recording {
+    id: int,
+    timestamp: string,
+    whisper_output: string,
+    llm_output: string,
+    user_correction: string,
+    total_duration_ms: int,
+    whisper_duration_ms: int,
+    llm_duration_ms: int,
+    success: bool,
+    error_message: string,
+}
+
+export struct Correction {
+    whisper_pattern: string,
+    intended_text: string,
+}
+
+export component RecordingCard inherits Rectangle {
+    in property <Recording> recording;
+    callback save_correction(string);
+    callback delete_recording();
+
+    property <bool> expanded: false;
+
+    background: #f8f9fa;
+    border-radius: 12px;
+    border-width: 1px;
+    border-color: #e0e0e0;
+
+    VerticalBox {
+        padding: 12px;
+        spacing: 8px;
+
+        // Header (always visible)
+        HorizontalBox {
+            spacing: 12px;
+
+            TouchArea {
+                clicked => { expanded = !expanded; }
+
+                HorizontalBox {
+                    spacing: 12px;
+
+                    Text {
+                        text: expanded ? "▼" : "▶";
+                        font-size: 14px;
+                        vertical-alignment: center;
+                    }
+
+                    Text {
+                        text: recording.timestamp;
+                        color: #6c757d;
+                        font-size: 12px;
+                        vertical-alignment: center;
+                        min-width: 120px;
+                    }
+
+                    Text {
+                        text: recording.llm_output != "" ? recording.llm_output : recording.whisper_output;
+                        horizontal-alignment: left;
+                        vertical-alignment: center;
+                        overflow: elide;
+                    }
+
+                    if recording.user_correction != "": Text {
+                        text: "✓ corrected";
+                        color: #28a745;
+                        font-size: 12px;
+                        vertical-alignment: center;
+                    }
+
+                    if !recording.success: Text {
+                        text: "⚠ Error";
+                        color: #dc3545;
+                        font-size: 12px;
+                        vertical-alignment: center;
+                    }
+                }
+            }
+        }
+
+        // Details (expandable)
+        if expanded: VerticalBox {
+            spacing: 12px;
+            padding-top: 8px;
+
+            // Duration info
+            if recording.total_duration_ms > 0: Text {
+                text: "Duration: " + recording.total_duration_ms + "ms (Whisper: " + recording.whisper_duration_ms + "ms, LLM: " + recording.llm_duration_ms + "ms)";
+                font-size: 11px;
+                color: #6c757d;
+            }
+
+            // Whisper output
+            VerticalBox {
+                spacing: 4px;
+
+                Text {
+                    text: "Whisper (Raw Transcription)";
+                    font-weight: 600;
+                    font-size: 13px;
+                }
+
+                Rectangle {
+                    background: white;
+                    border-radius: 6px;
+                    border-width: 1px;
+                    border-color: #dee2e6;
+                    min-height: 80px;
+
+                    TextEdit {
+                        text: recording.whisper_output;
+                        read-only: true;
+                        wrap: word-wrap;
+                    }
+                }
+            }
+
+            // LLM output
+            VerticalBox {
+                spacing: 4px;
+
+                Text {
+                    text: "LLM (Formatted)";
+                    font-weight: 600;
+                    font-size: 13px;
+                }
+
+                Rectangle {
+                    background: white;
+                    border-radius: 6px;
+                    border-width: 1px;
+                    border-color: #dee2e6;
+                    min-height: 80px;
+
+                    TextEdit {
+                        text: recording.llm_output;
+                        read-only: true;
+                        wrap: word-wrap;
+                    }
+                }
+            }
+
+            // Correction field
+            VerticalBox {
+                spacing: 4px;
+
+                Text {
+                    text: "Your Correction (what you actually meant)";
+                    font-weight: 600;
+                    font-size: 13px;
+                    color: #0d6efd;
+                }
+
+                Rectangle {
+                    background: #f0f8ff;
+                    border-radius: 6px;
+                    border-width: 2px;
+                    border-color: #0d6efd;
+                    min-height: 100px;
+
+                    correction_edit := TextEdit {
+                        text: recording.user_correction != "" ? recording.user_correction : recording.llm_output;
+                        wrap: word-wrap;
+                    }
+                }
+            }
+
+            // Buttons
+            HorizontalBox {
+                spacing: 8px;
+
+                Button {
+                    text: "Save Correction";
+                    primary: true;
+                    clicked => {
+                        save_correction(correction_edit.text);
+                    }
+                }
+
+                Button {
+                    text: "Delete";
+                    clicked => {
+                        delete_recording();
+                    }
+                }
+            }
+
+            // Error message
+            if recording.error_message != "": Text {
+                text: "Error: " + recording.error_message;
+                color: #dc3545;
+                wrap: word-wrap;
+            }
+        }
+    }
+}
+
+export component MainWindow inherits Window {
+    title: "Flüstern";
+    preferred-width: 900px;
+    preferred-height: 700px;
+
+    callback refresh();
+    callback save_correction(int, string);
+    callback delete_recording(int);
+    callback save_settings(string, string, string, bool, bool, string);
+    callback reset_prompt();
+    callback clear_logs();
+
+    in property <[Recording]> recordings: [];
+    in property <[Correction]> corrections: [];
+    in property <string> logs: "";
+    in property <string> api_key: "";
+    in property <string> mic_source: "";
+    in property <string> language: "";
+    in property <bool> notifications: true;
+    in property <bool> tray_icon: true;
+    in property <string> system_prompt: "";
+
+    VerticalBox {
+        padding: 0px;
+
+        // Header
+        Rectangle {
+            height: 50px;
+            background: #0d6efd;
+
+            HorizontalBox {
+                padding: 10px;
+                spacing: 10px;
+
+                Text {
+                    text: "Flüstern";
+                    color: white;
+                    font-size: 20px;
+                    font-weight: 700;
+                    vertical-alignment: center;
+                }
+
+                Rectangle { } // Spacer
+
+                Button {
+                    text: "🔄 Refresh";
+                    clicked => { refresh(); }
+                }
+            }
+        }
+
+        // Main content
+        TabWidget {
+            // History tab
+            Tab {
+                title: "📝 History";
+
+                VerticalBox {
+                    padding: 12px;
+
+                    if recordings.length == 0: VerticalBox {
+                        alignment: center;
+
+                        Text {
+                            text: "No recordings yet.\nStart a recording with the Voice Input toggle.";
+                            color: #6c757d;
+                            horizontal-alignment: center;
+                            font-size: 14px;
+                        }
+                    }
+
+                    if recordings.length > 0: ScrollView {
+                        viewport-height: recordings.length * 120px;
+
+                        VerticalBox {
+                            spacing: 8px;
+
+                            for rec[idx] in recordings: RecordingCard {
+                                recording: rec;
+                                save_correction(text) => {
+                                    save_correction(rec.id, text);
+                                }
+                                delete_recording => {
+                                    delete_recording(rec.id);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Logs tab
+            Tab {
+                title: "🪲 Debug Logs";
+
+                VerticalBox {
+                    padding: 12px;
+                    spacing: 8px;
+
+                    Text {
+                        text: "Debug-Logs vom Voice Input Script";
+                        color: #6c757d;
+                        font-size: 13px;
+                    }
+
+                    Button {
+                        text: "Clear Logs";
+                        clicked => { clear_logs(); }
+                    }
+
+                    Rectangle {
+                        background: #1e1e1e;
+                        border-radius: 6px;
+
+                        ScrollView {
+                            TextEdit {
+                                text: logs;
+                                font-size: 11px;
+                                read-only: true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Settings tab
+            Tab {
+                title: "⚙️ Settings";
+
+                ScrollView {
+                    VerticalBox {
+                        padding: 20px;
+                        spacing: 20px;
+
+                        // API Configuration
+                        VerticalBox {
+                            spacing: 10px;
+
+                            Text {
+                                text: "API Configuration";
+                                font-size: 16px;
+                                font-weight: 600;
+                            }
+
+                            VerticalBox {
+                                spacing: 4px;
+
+                                Text { text: "Groq API Key"; font-size: 13px; }
+                                api_entry := LineEdit {
+                                    text: api_key;
+                                    placeholder-text: "Enter your Groq API key";
+                                }
+                            }
+                        }
+
+                        // Recording settings
+                        VerticalBox {
+                            spacing: 10px;
+
+                            Text {
+                                text: "Recording";
+                                font-size: 16px;
+                                font-weight: 600;
+                            }
+
+                            VerticalBox {
+                                spacing: 4px;
+
+                                Text { text: "Microphone Source (empty = default)"; font-size: 13px; }
+                                mic_entry := LineEdit {
+                                    text: mic_source;
+                                    placeholder-text: "Leave empty for default";
+                                }
+                            }
+
+                            VerticalBox {
+                                spacing: 4px;
+
+                                Text { text: "Language (e.g. 'de', 'en', empty = auto)"; font-size: 13px; }
+                                lang_entry := LineEdit {
+                                    text: language;
+                                    placeholder-text: "en, de, es, fr, etc.";
+                                }
+                            }
+                        }
+
+                        // Interface settings
+                        VerticalBox {
+                            spacing: 10px;
+
+                            Text {
+                                text: "Interface";
+                                font-size: 16px;
+                                font-weight: 600;
+                            }
+
+                            notif_check := CheckBox {
+                                text: "Notifications";
+                                checked: notifications;
+                            }
+
+                            tray_check := CheckBox {
+                                text: "Tray Icon";
+                                checked: tray_icon;
+                            }
+                        }
+
+                        // System prompt
+                        VerticalBox {
+                            spacing: 10px;
+
+                            Text {
+                                text: "System Prompt";
+                                font-size: 16px;
+                                font-weight: 600;
+                            }
+
+                            Text {
+                                text: "Der System Prompt wird dem LLM gegeben, um die Formatierung zu steuern:";
+                                color: #6c757d;
+                                font-size: 12px;
+                                wrap: word-wrap;
+                            }
+
+                            Rectangle {
+                                background: white;
+                                border-radius: 6px;
+                                border-width: 1px;
+                                border-color: #dee2e6;
+                                height: 200px;
+
+                                prompt_edit := TextEdit {
+                                    text: system_prompt;
+                                    wrap: word-wrap;
+                                }
+                            }
+
+                            Button {
+                                text: "Reset to Default";
+                                clicked => { reset_prompt(); }
+                            }
+                        }
+
+                        Button {
+                            text: "💾 Save Settings";
+                            primary: true;
+                            clicked => {
+                                save_settings(
+                                    api_entry.text,
+                                    mic_entry.text,
+                                    lang_entry.text,
+                                    notif_check.checked,
+                                    tray_check.checked,
+                                    prompt_edit.text
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Corrections tab
+            Tab {
+                title: "✏️ Corrections";
+
+                VerticalBox {
+                    padding: 12px;
+                    spacing: 12px;
+
+                    Text {
+                        text: "Saved Corrections";
+                        font-size: 16px;
+                        font-weight: 700;
+                    }
+
+                    Text {
+                        text: "These corrections are provided to the LLM as context to better understand your speech patterns.";
+                        color: #6c757d;
+                        font-size: 13px;
+                        wrap: word-wrap;
+                    }
+
+                    if corrections.length == 0: Text {
+                        text: "No corrections yet.\n\nClick 'Save Correction' on a recording to add training data.";
+                        color: #6c757d;
+                        horizontal-alignment: center;
+                    }
+
+                    if corrections.length > 0: ScrollView {
+                        VerticalBox {
+                            spacing: 6px;
+
+                            for corr in corrections: HorizontalBox {
+                                spacing: 12px;
+                                padding: 8px;
+
+                                Text {
+                                    text: "\"" + corr.whisper_pattern + "\"";
+                                    color: #6c757d;
+                                }
+
+                                Text {
+                                    text: "→";
+                                    font-size: 14px;
+                                }
+
+                                Text {
+                                    text: "\"" + corr.intended_text + "\"";
+                                    color: #0d6efd;
+                                    font-weight: 600;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

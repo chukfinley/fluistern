@@ -16,3 +16,4 @@ history.db
 *.swp
 *.swo
 *~
+__pycache__/

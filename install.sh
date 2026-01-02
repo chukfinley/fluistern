@@ -28,14 +28,6 @@ command -v yad >/dev/null 2>&1 || MISSING+=("yad")
 command -v sqlite3 >/dev/null 2>&1 || MISSING+=("sqlite3")
 command -v cargo >/dev/null 2>&1 || MISSING+=("cargo" "rust")
 
-# Check GTK4 and libadwaita development libraries
-if ! pkg-config --exists gtk4 2>/dev/null; then
-    MISSING+=("gtk4" "libgtk-4-dev")
-fi
-if ! pkg-config --exists libadwaita-1 2>/dev/null; then
-    MISSING+=("libadwaita-1-dev")
-fi
-
 if [[ ${#MISSING[@]} -gt 0 ]]; then
     echo "Missing packages: ${MISSING[*]}"
     echo

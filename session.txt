@@ -1,1 +1,0 @@
-claude --resume 9eec60ab-06ae-428a-880f-4d66618db32c  # Rewrite app UI in Tauri with WebUI pattern

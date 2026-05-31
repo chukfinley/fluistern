@@ -23,3 +23,7 @@ history.db
 *.swo
 *~
 __pycache__/
+
+# Session / agent artifacts
+session.txt
+.claude/

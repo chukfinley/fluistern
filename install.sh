@@ -117,29 +117,48 @@ echo "Created symlink: $BIN_DIR/plauder"
 # Install desktop entry + icon so the GUI shows up in app launchers
 echo "Installing launcher entry..."
 APP_DIR="$HOME/.local/share/applications"
-ICON_DIR="$HOME/.local/share/icons/hicolor/128x128/apps"
-mkdir -p "$APP_DIR" "$ICON_DIR"
-cp "$SCRIPT_DIR/src-tauri/icons/128x128.png" "$ICON_DIR/plauder.png"
+HICOLOR="$HOME/.local/share/icons/hicolor"
+mkdir -p "$APP_DIR" "$HICOLOR/scalable/apps"
+
+# Install the SVG as the scalable launcher icon so high-DPI displays render
+# crisply. PNG sizes go alongside as theme fallbacks.
+cp "$SCRIPT_DIR/icons/plauder.svg" "$HICOLOR/scalable/apps/plauder.svg"
+for size in 16 32 48 64 128 256; do
+    src="$SCRIPT_DIR/src-tauri/icons/${size}x${size}.png"
+    if [[ ! -f "$src" ]]; then
+        case "$size" in
+            16|48|64|256) src="" ;;
+            32)  src="$SCRIPT_DIR/src-tauri/icons/32x32.png" ;;
+            128) src="$SCRIPT_DIR/src-tauri/icons/128x128.png" ;;
+        esac
+    fi
+    [[ -n "$src" && -f "$src" ]] || continue
+    mkdir -p "$HICOLOR/${size}x${size}/apps"
+    cp "$src" "$HICOLOR/${size}x${size}/apps/plauder.png"
+done
 cp "$SCRIPT_DIR/src-tauri/icons/icon.png" "$INSTALL_DIR/icon.png"
-# Generate the .desktop with absolute paths (desktop Exec does NOT expand $HOME)
+cp "$SCRIPT_DIR/icons/plauder.svg" "$INSTALL_DIR/icon.svg"
+
+# Generate the .desktop with absolute paths (Exec= does NOT expand $HOME).
+# Icon= references the hicolor theme so the launcher picks the best size.
 cat > "$APP_DIR/plauder.desktop" <<EOF
 [Desktop Entry]
 Name=Plauder
 GenericName=Voice Dictation
 Comment=Recording history, logs & settings for voice input
 Exec=$INSTALL_DIR/plauder-gui
-Icon=$INSTALL_DIR/icon.png
+Icon=plauder
 Terminal=false
 Type=Application
-Categories=Utility;
+Categories=AudioVideo;Audio;Utility;
 Keywords=voice;input;dictation;whisper;transcription;plauder;
 StartupWMClass=Plauder
 EOF
 chmod 644 "$APP_DIR/plauder.desktop"
-# Remove the old broken entry if present
-rm -f "$APP_DIR/plauder-gui.desktop"
+# Remove old/broken entries if present
+rm -f "$APP_DIR/plauder-gui.desktop" "$APP_DIR/fluistern-gui.desktop" "$APP_DIR/fluistern.desktop"
 update-desktop-database "$APP_DIR" 2>/dev/null || true
-gtk-update-icon-cache -f "$HOME/.local/share/icons/hicolor" 2>/dev/null || true
+gtk-update-icon-cache -f -t "$HICOLOR" 2>/dev/null || true
 echo "Launcher entry installed: Plauder"
 
 # Check .env configuration

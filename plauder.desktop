@@ -2,7 +2,7 @@
 Name=Plauder
 GenericName=Voice Dictation
 Comment=Recording history, logs & settings for voice input
-Exec=sh -c "exec $HOME/.local/share/plauder/plauder-gui"
+Exec=/home/user/.local/share/plauder/plauder-gui
 Icon=plauder
 Terminal=false
 Type=Application

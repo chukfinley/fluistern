@@ -1,4 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
-  <path fill="#ffaa00" d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
-  <path fill="#ffaa00" d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" aria-label="Plauder processing">
+  <g fill="#F59E0B">
+    <rect x="9" y="3" width="6" height="11" rx="3"/>
+    <path d="M6 11a6 6 0 0 0 12 0h-1.5a4.5 4.5 0 0 1-9 0z"/>
+    <rect x="11" y="18" width="2" height="3" rx="1"/>
+    <rect x="8" y="20.5" width="8" height="1.5" rx="0.75"/>
+  </g>
 </svg>

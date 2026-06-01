@@ -1,10 +1,18 @@
-# Plauder
+<p align="center">
+  <img src="icons/plauder.svg" alt="Plauder" width="160" height="160"/>
+</p>
 
-> WhisperFlow-style voice dictation for Linux — Groq Whisper + LLM formatting, pastes into any focused window.
+<h1 align="center">Plauder</h1>
 
-[![Build](https://github.com/chukfinley/plauder/actions/workflows/build.yml/badge.svg)](https://github.com/chukfinley/plauder/actions/workflows/build.yml)
-[![Release](https://img.shields.io/github/v/release/chukfinley/plauder)](https://github.com/chukfinley/plauder/releases/latest)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+<p align="center">
+  <em>WhisperFlow-style voice dictation for Linux — Groq Whisper + LLM formatting, pastes into any focused window.</em>
+</p>
+
+<p align="center">
+  <a href="https://github.com/chukfinley/plauder/actions/workflows/build.yml"><img src="https://github.com/chukfinley/plauder/actions/workflows/build.yml/badge.svg" alt="Build"/></a>
+  <a href="https://github.com/chukfinley/plauder/releases/latest"><img src="https://img.shields.io/github/v/release/chukfinley/plauder" alt="Release"/></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"/></a>
+</p>
 
 Press a keybind, speak, press again — the text appears in whatever window has focus. Transcription via Groq's Whisper Large V3 Turbo, optional clean-up via a Groq LLM, history kept locally in SQLite.
 

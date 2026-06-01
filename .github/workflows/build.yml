@@ -36,14 +36,22 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Cache cargo
+      # Note: src-tauri/target is intentionally NOT cached. Tauri build scripts
+      # bake absolute paths (e.g. plugin permissions in
+      # target/release/build/tauri-*/out/permissions/...) into artefacts inside
+      # `target/`, so a cache restored after the repo was renamed points at the
+      # old checkout path and the build fails with "No such file or directory".
+      # Caching just the registry/git mirror still saves the bulk of the time.
+      - name: Cache cargo registry
         uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            src-tauri/target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('src-tauri/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-registry-${{ github.repository }}-${{ hashFiles('src-tauri/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-registry-${{ github.repository }}-
+            ${{ runner.os }}-cargo-registry-
 
       - name: Install frontend dependencies
         run: pnpm install
